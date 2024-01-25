@@ -1,3 +1,4 @@
+use clap::{Arg, Command as ClapCommand};
 use serde_derive::Deserialize;
 use std::fs;
 use std::time::Duration;
@@ -10,19 +11,33 @@ struct CommandConfig {
     run: String,
 }
 
+/// Build a Command
+fn build_cli() -> ClapCommand {
+    ClapCommand::new("ronde")
+        .version(env!("CARGO_PKG_VERSION"))
+        .author("Boris Faure <boris.faure@gmail.com>")
+        .about("Keep an eye on your services")
+        .arg(
+            Arg::new("ConfigFile")
+                .value_name("YamlConfigFile")
+                .num_args(1..)
+                .required(true)
+                .help("YAML Config file describing the services to monitor"),
+        )
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let args: Vec<String> = std::env::args().collect();
+    let matches = build_cli().get_matches();
 
-    if args.len() != 2 {
-        eprintln!("Usage: {} <yaml-file>", args[0]);
-        std::process::exit(1);
+    let yaml_files = matches.get_many::<String>("ConfigFile").unwrap();
+    let mut commands: Vec<CommandConfig> = Vec::new();
+
+    for file in yaml_files {
+        let file_contents = fs::read_to_string(file)?;
+        let file_commands: Vec<CommandConfig> = serde_yaml::from_str(&file_contents)?;
+        commands.extend(file_commands);
     }
-
-    let yaml_file_path = &args[1];
-
-    let file_contents = fs::read_to_string(yaml_file_path)?;
-    let commands: Vec<CommandConfig> = serde_yaml::from_str(&file_contents)?;
 
     for command in commands {
         let result = execute_command(&command).await?;
