@@ -1,6 +1,7 @@
 use clap::{Arg, Command as ClapCommand};
 use serde_derive::Deserialize;
 use std::fs;
+use std::process::Output;
 use std::time::Duration;
 use tokio::process::Command;
 
@@ -48,7 +49,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let result = execute_command(&command).await?;
         println!(
             "Command '{}' executed with exit code {}",
-            command.name, result
+            command.name,
+            result.status.code().unwrap_or(255)
         );
     }
 
@@ -56,20 +58,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 /// Execute a command
-async fn execute_command(command: &CommandConfig) -> Result<i32, Box<dyn std::error::Error>> {
-    let mut process = Command::new("sh")
+async fn execute_command(command: &CommandConfig) -> Result<Output, std::io::Error> {
+    let child = Command::new("sh")
         .arg("-c")
         .arg(&command.run)
         .kill_on_drop(true)
         .spawn()?;
 
-    let status = tokio::time::timeout(Duration::from_secs(command.timeout), process.wait()).await?;
-
-    match status {
-        Ok(exit_status) => Ok(exit_status.code().unwrap_or(0)),
-        Err(_) => {
-            process.kill().await?;
-            Ok(-1) // Timed out
-        }
-    }
+    let output = tokio::time::timeout(
+        Duration::from_secs(command.timeout),
+        child.wait_with_output(),
+    )
+    .await?;
+    output
 }
