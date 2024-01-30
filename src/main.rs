@@ -5,9 +5,13 @@ use std::time::Duration;
 use tokio::process::Command;
 
 #[derive(Debug, Deserialize)]
+/// Command configuration
 struct CommandConfig {
+    /// Name of the command
     name: String,
+    /// Timeout in seconds
     timeout: u64,
+    /// Command to run
     run: String,
 }
 
@@ -27,6 +31,7 @@ fn build_cli() -> ClapCommand {
 }
 
 #[tokio::main]
+/// Main function
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let matches = build_cli().get_matches();
 
@@ -50,6 +55,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
+/// Execute a command
 async fn execute_command(command: &CommandConfig) -> Result<i32, Box<dyn std::error::Error>> {
     let mut process = Command::new("sh")
         .arg("-c")
