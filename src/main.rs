@@ -48,9 +48,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     for command in commands {
         let result = execute_command(&command).await?;
         println!(
-            "Command '{}' executed with exit code {}",
+            "Command '{}' executed with exit code {}, stdout: '{}', stderr: '{}'",
             command.name,
-            result.status.code().unwrap_or(255)
+            result.status.code().unwrap_or(255),
+            result.stdout.iter().map(|&c| c as char).collect::<String>(),
+            result.stderr.iter().map(|&c| c as char).collect::<String>()
         );
     }
 
@@ -63,6 +65,8 @@ async fn execute_command(command: &CommandConfig) -> Result<Output, std::io::Err
         .arg("-c")
         .arg(&command.run)
         .kill_on_drop(true)
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped())
         .spawn()?;
 
     let output = tokio::time::timeout(
