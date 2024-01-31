@@ -1,20 +1,9 @@
 use clap::{Arg, Command as ClapCommand};
-use serde_derive::Deserialize;
-use std::fs;
-use std::process::Output;
-use std::time::Duration;
-use tokio::process::Command;
 
-#[derive(Debug, Deserialize)]
-/// Command configuration
-struct CommandConfig {
-    /// Name of the command
-    name: String,
-    /// Timeout in seconds
-    timeout: u64,
-    /// Command to run
-    run: String,
-}
+/// Module to load configuration
+mod config;
+/// Module to run commands
+mod runner;
 
 /// Build a Command
 fn build_cli() -> ClapCommand {
@@ -37,16 +26,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let matches = build_cli().get_matches();
 
     let yaml_files = matches.get_many::<String>("ConfigFile").unwrap();
-    let mut commands: Vec<CommandConfig> = Vec::new();
-
-    for file in yaml_files {
-        let file_contents = fs::read_to_string(file)?;
-        let file_commands: Vec<CommandConfig> = serde_yaml::from_str(&file_contents)?;
-        commands.extend(file_commands);
-    }
+    let commands = config::load(yaml_files)?;
 
     for command in commands {
-        let result = execute_command(&command).await?;
+        let result = runner::execute_command(&command).await?;
         println!(
             "Command '{}' executed with exit code {}, stdout: '{}', stderr: '{}'",
             command.name,
@@ -57,22 +40,4 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     Ok(())
-}
-
-/// Execute a command
-async fn execute_command(command: &CommandConfig) -> Result<Output, std::io::Error> {
-    let child = Command::new("sh")
-        .arg("-c")
-        .arg(&command.run)
-        .kill_on_drop(true)
-        .stdout(std::process::Stdio::piped())
-        .stderr(std::process::Stdio::piped())
-        .spawn()?;
-
-    let output = tokio::time::timeout(
-        Duration::from_secs(command.timeout),
-        child.wait_with_output(),
-    )
-    .await?;
-    output
 }
