@@ -29,14 +29,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let commands = config::load(yaml_files)?;
 
     for command in commands {
-        let result = runner::execute_command(&command).await?;
-        println!(
-            "Command '{}' executed with exit code {}, stdout: '{}', stderr: '{}'",
-            command.name,
-            result.status.code().unwrap_or(255),
-            result.stdout.iter().map(|&c| c as char).collect::<String>(),
-            result.stderr.iter().map(|&c| c as char).collect::<String>()
-        );
+        let result = runner::execute_command(command).await;
+        match result.result {
+            Ok(output) => {
+                println!(
+                    "Command '{}' executed with exit code {}, stdout: '{}', stderr: '{}'",
+                    result.config.name,
+                    output.status.code().unwrap_or(255),
+                    output.stdout.iter().map(|&c| c as char).collect::<String>(),
+                    output.stderr.iter().map(|&c| c as char).collect::<String>()
+                );
+            }
+            Err(e) => {
+                println!("Command '{}' failed: {}", result.config.name, e);
+            }
+        }
     }
 
     Ok(())
