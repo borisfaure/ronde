@@ -1,4 +1,5 @@
 use clap::{Arg, Command as ClapCommand};
+use futures::future::join_all;
 
 /// Module to load configuration
 mod config;
@@ -28,8 +29,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let yaml_file = matches.get_one::<String>("ConfigFile").unwrap();
     let commands = config::load(yaml_file)?;
 
-    for command in commands {
-        let result = runner::execute_command(command).await;
+    let results = join_all(commands.into_iter().map(|c| runner::execute_command(c))).await;
+
+    for result in results {
         match result.result {
             Ok(output) => {
                 println!(
