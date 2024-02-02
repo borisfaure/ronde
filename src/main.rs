@@ -14,7 +14,7 @@ fn build_cli() -> ClapCommand {
         .arg(
             Arg::new("ConfigFile")
                 .value_name("YamlConfigFile")
-                .num_args(1..)
+                .num_args(1)
                 .required(true)
                 .help("YAML Config file describing the services to monitor"),
         )
@@ -25,8 +25,8 @@ fn build_cli() -> ClapCommand {
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let matches = build_cli().get_matches();
 
-    let yaml_files = matches.get_many::<String>("ConfigFile").unwrap();
-    let commands = config::load(yaml_files)?;
+    let yaml_file = matches.get_one::<String>("ConfigFile").unwrap();
+    let commands = config::load(yaml_file)?;
 
     for command in commands {
         let result = runner::execute_command(command).await;

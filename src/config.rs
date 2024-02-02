@@ -1,4 +1,3 @@
-use clap::parser::ValuesRef;
 use serde_derive::Deserialize;
 use std::fs;
 
@@ -14,14 +13,8 @@ pub struct CommandConfig {
 }
 
 /// Load configuration from YAML files
-pub fn load(
-    yaml_files: ValuesRef<'_, String>,
-) -> Result<Vec<CommandConfig>, Box<dyn std::error::Error>> {
-    let mut commands: Vec<CommandConfig> = Vec::new();
-    for file in yaml_files {
-        let file_contents = fs::read_to_string(file)?;
-        let file_commands: Vec<CommandConfig> = serde_yaml::from_str(&file_contents)?;
-        commands.extend(file_commands);
-    }
+pub fn load(yaml_file: &String) -> Result<Vec<CommandConfig>, Box<dyn std::error::Error>> {
+    let file_contents = fs::read_to_string(yaml_file)?;
+    let commands: Vec<CommandConfig> = serde_yaml::from_str(&file_contents)?;
     Ok(commands)
 }
