@@ -1,7 +1,6 @@
 use serde_derive::{Deserialize, Serialize};
 use thiserror::Error;
-use tokio::fs::File;
-use tokio::io::AsyncReadExt;
+use tokio::fs;
 
 /// History Result
 #[derive(Error, Debug, Serialize, Deserialize)]
@@ -51,20 +50,27 @@ pub struct History {
 }
 
 #[derive(Error, Debug)]
-pub enum LoadError {
+pub enum HistoryIoError {
     /// IO Error
     #[error("IO Error: {0}")]
     IoError(#[from] std::io::Error),
     /// Serde Error
     #[error("Serde Error: {0}")]
-    SerdeError(#[from] postcard::Error),
+    SerdeError(#[from] serde_yaml::Error),
 }
 
-/// Load history from a file
-pub async fn load(postcard_file: &String) -> Result<History, LoadError> {
-    let mut file = File::open(postcard_file).await?;
-    let mut contents = vec![];
-    file.read_to_end(&mut contents).await?;
-    let history: History = postcard::from_bytes(&contents)?;
-    Ok(history)
+impl History {
+    /// Load history from a file
+    pub async fn load(history_file: &String) -> Result<Self, HistoryIoError> {
+        let contents = fs::read_to_string(history_file).await?;
+        let history: History = serde_yaml::from_str(&contents)?;
+        Ok(history)
+    }
+
+    /// Save history to a file
+    pub async fn save(&self, history_file: &String) -> Result<(), HistoryIoError> {
+        let bytes = serde_yaml::to_string(self)?;
+        fs::write(history_file, &bytes).await?;
+        Ok(())
+    }
 }

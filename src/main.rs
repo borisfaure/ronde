@@ -5,6 +5,7 @@ use futures::future::join_all;
 mod config;
 /// Module to store history
 mod history;
+use history::History;
 /// Module to generate HTML output
 mod html;
 /// Module to run commands
@@ -54,7 +55,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let results = join_all(commands.into_iter().map(runner::execute_command)).await;
 
     let history_file = matches.get_one::<String>("HistoryFile").unwrap();
-    let _history = history::load(&history_file).await?;
+    let history = History::load(&history_file).await?;
+
+    history.save(&history_file).await?;
 
     let html = html::generate(&results);
     let output_file = matches.get_one::<String>("OutputFile").unwrap();
