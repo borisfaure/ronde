@@ -63,9 +63,16 @@ pub enum HistoryIoError {
 impl History {
     /// Load history from a file
     pub async fn load(history_file: &String) -> Result<Self, HistoryIoError> {
-        let contents = fs::read_to_string(history_file).await?;
-        let history: History = serde_yaml::from_str(&contents)?;
-        Ok(history)
+        match fs::read_to_string(history_file).await {
+            Ok(contents) => {
+                let history: History = serde_yaml::from_str(&contents)?;
+                Ok(history)
+            }
+            Err(ref e) if e.kind() == std::io::ErrorKind::NotFound => Ok(History {
+                commands: Vec::new(),
+            }),
+            Err(e) => Err(HistoryIoError::IoError(e)),
+        }
     }
 
     /// Save history to a file
