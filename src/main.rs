@@ -49,7 +49,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let matches = build_cli().get_matches();
 
     let yaml_file = matches.get_one::<String>("ConfigFile").unwrap();
-    let commands = config::load(yaml_file)?;
+    let commands = config::load(yaml_file).await?;
 
     let results = join_all(commands.into_iter().map(runner::execute_command)).await;
 

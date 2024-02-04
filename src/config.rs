@@ -1,5 +1,5 @@
 use serde_derive::{Deserialize, Serialize};
-use std::fs;
+use tokio::fs;
 
 #[derive(Debug, Serialize, Deserialize)]
 /// Command configuration
@@ -13,8 +13,8 @@ pub struct CommandConfig {
 }
 
 /// Load configuration from YAML files
-pub fn load(yaml_file: &String) -> Result<Vec<CommandConfig>, Box<dyn std::error::Error>> {
-    let file_contents = fs::read_to_string(yaml_file)?;
+pub async fn load(yaml_file: &String) -> Result<Vec<CommandConfig>, Box<dyn std::error::Error>> {
+    let file_contents = fs::read_to_string(yaml_file).await?;
     let commands: Vec<CommandConfig> = serde_yaml::from_str(&file_contents)?;
     Ok(commands)
 }
