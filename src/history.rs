@@ -1,3 +1,4 @@
+use crate::runner::CommandResult;
 use serde_derive::{Deserialize, Serialize};
 use thiserror::Error;
 use tokio::fs;
@@ -72,5 +73,43 @@ impl History {
         let bytes = serde_yaml::to_string(self)?;
         fs::write(history_file, &bytes).await?;
         Ok(())
+    }
+
+    /// Update the history with new results
+    pub fn update(&mut self, results: &Vec<CommandResult>) {
+        for result in results {
+            let command_history = self
+                .commands
+                .iter_mut()
+                .find(|c| c.name == result.config.name);
+            match command_history {
+                Some(command_history) => {
+                    let entry = CommandHistoryEntry {
+                        result: match &result.result {
+                            Ok(_) => Ok(()),
+                            Err(e) => Err(HistoryError::Other(e.to_string())),
+                        },
+                        timestamp: chrono::Utc::now().to_rfc3339(),
+                    };
+                    command_history.entries.push(entry);
+                }
+                None => {
+                    let mut entries = Vec::new();
+                    let entry = CommandHistoryEntry {
+                        result: match &result.result {
+                            Ok(_) => Ok(()),
+                            Err(e) => Err(HistoryError::Other(e.to_string())),
+                        },
+                        timestamp: chrono::Utc::now().to_rfc3339(),
+                    };
+                    entries.push(entry);
+                    let command_history = CommandHistory {
+                        name: result.config.name.clone(),
+                        entries,
+                    };
+                    self.commands.push(command_history);
+                }
+            }
+        }
     }
 }
