@@ -57,6 +57,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let history_file = matches.get_one::<String>("HistoryFile").unwrap();
     let mut history = History::load(history_file).await?;
 
+    history.purge_from_results(&results);
     history.update(&results);
 
     let html = html::generate(&results);

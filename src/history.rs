@@ -75,6 +75,12 @@ impl History {
         Ok(())
     }
 
+    /// Purge the history of commands that are not in the current configuration
+    pub fn purge_from_results(&mut self, results: &[CommandResult]) {
+        self.commands
+            .retain(|c| results.iter().any(|r| r.config.name == c.name));
+    }
+
     /// Update the history with new results
     pub fn update(&mut self, results: &Vec<CommandResult>) {
         for result in results {
