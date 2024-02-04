@@ -8,8 +8,8 @@ use tokio::process::Command;
 #[derive(Error, Debug)]
 pub enum CommandError {
     /// Timeout
-    #[error("Timeout")]
-    Timeout(#[from] tokio::time::error::Elapsed),
+    #[error("TimedOut")]
+    TimedOut(#[from] tokio::time::error::Elapsed),
     /// Command error
     #[error("Command error: {0}")]
     Command(#[from] std::io::Error),

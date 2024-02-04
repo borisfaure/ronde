@@ -1,4 +1,4 @@
-use crate::runner::CommandResult;
+use crate::runner::{CommandError, CommandResult};
 use serde_derive::{Deserialize, Serialize};
 use thiserror::Error;
 use tokio::fs;
@@ -11,7 +11,7 @@ pub enum HistoryError {
     /// Command error
     CommandError { stdout: String, stderr: String },
     /// Other error
-    Other(String),
+    Other { message: String },
 }
 impl std::fmt::Display for HistoryError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -20,7 +20,7 @@ impl std::fmt::Display for HistoryError {
             HistoryError::CommandError { stdout, stderr } => {
                 write!(f, "Command error: stdout: {}, stderr: {}", stdout, stderr)
             }
-            HistoryError::Other(err) => write!(f, "Other error: {}", err),
+            HistoryError::Other { message } => write!(f, "Other error: {}", message),
         }
     }
 }
@@ -95,30 +95,24 @@ impl History {
                 .commands
                 .iter_mut()
                 .find(|c| c.name == result.config.name);
+            let entry = CommandHistoryEntry {
+                result: match &result.result {
+                    Ok(_) => Ok(()),
+                    Err(CommandError::TimedOut(_)) => Err(HistoryError::Timeout),
+                    Err(e) => Err(HistoryError::Other {
+                        message: e.to_string(),
+                    }),
+                },
+                timestamp: chrono::Utc::now().to_rfc3339(),
+            };
             match command_history {
                 Some(command_history) => {
-                    let entry = CommandHistoryEntry {
-                        result: match &result.result {
-                            Ok(_) => Ok(()),
-                            Err(e) => Err(HistoryError::Other(e.to_string())),
-                        },
-                        timestamp: chrono::Utc::now().to_rfc3339(),
-                    };
                     command_history.entries.push(entry);
                 }
                 None => {
-                    let mut entries = Vec::new();
-                    let entry = CommandHistoryEntry {
-                        result: match &result.result {
-                            Ok(_) => Ok(()),
-                            Err(e) => Err(HistoryError::Other(e.to_string())),
-                        },
-                        timestamp: chrono::Utc::now().to_rfc3339(),
-                    };
-                    entries.push(entry);
                     let command_history = CommandHistory {
                         name: result.config.name.clone(),
-                        entries,
+                        entries: vec![entry],
                     };
                     self.commands.push(command_history);
                 }
