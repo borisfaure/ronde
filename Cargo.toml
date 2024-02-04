@@ -2,8 +2,13 @@
 name = "ronde"
 version = "0.1.0"
 edition = "2021"
+authors = ["Boris Faure <boris.faure@gmail.com>"]
+description = "Monitor your servers and services with alerting and a simple status page"
+repository = "https://github.com/borisfaure/ronde"
+license = "BSD-2-Clause"
+readme = "README.md"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
 
 [dependencies]
 tokio = { version = "1.35", features = ["full"] }
