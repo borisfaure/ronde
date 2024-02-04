@@ -40,7 +40,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let yaml_file = matches.get_one::<String>("ConfigFile").unwrap();
     let commands = config::load(yaml_file)?;
 
-    let results = join_all(commands.into_iter().map(|c| runner::execute_command(c))).await;
+    let results = join_all(commands.into_iter().map(runner::execute_command)).await;
 
     let html = html::generate(&results);
     let output_file = matches.get_one::<String>("OutputFile").unwrap();
