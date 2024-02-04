@@ -28,7 +28,7 @@ fn build_cli() -> ClapCommand {
             Arg::new("HistoryFile")
                 .value_name("HistoryFile")
                 .num_args(1)
-                .short('h')
+                .short('H')
                 .long("history")
                 .required(true)
                 .help("History file"),
