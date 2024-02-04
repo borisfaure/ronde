@@ -15,6 +15,7 @@ tokio = { version = "1.35", features = ["full"] }
 futures = "0.3"
 serde = "1.0"
 serde_derive = "1.0"
+postcard = "1.0"
 serde_yaml = "0.9"
 clap = { version = "4.1", features = ["derive"]}
 thiserror = "1"

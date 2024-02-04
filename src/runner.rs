@@ -14,7 +14,9 @@ pub enum CommandError {
     #[error("Command error: {0}")]
     Command(#[from] std::io::Error),
 }
+
 /// Command result
+#[derive(Debug)]
 pub struct CommandResult {
     /// Command configuration
     pub config: CommandConfig,
