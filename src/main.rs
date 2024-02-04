@@ -55,7 +55,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let results = join_all(commands.into_iter().map(runner::execute_command)).await;
 
     let history_file = matches.get_one::<String>("HistoryFile").unwrap();
-    let mut history = History::load(&history_file).await?;
+    let mut history = History::load(history_file).await?;
 
     history.update(&results);
 
@@ -63,6 +63,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let output_file = matches.get_one::<String>("OutputFile").unwrap();
     std::fs::write(output_file, html)?;
 
-    history.save(&history_file).await?;
+    history.save(history_file).await?;
     Ok(())
 }
