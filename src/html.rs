@@ -8,10 +8,10 @@ fn header(summary: &Summary) -> Markup {
     html! {
         (DOCTYPE)
         meta charset="utf-8";
+        style { (PreEscaped(include_str!("style.css"))) }
         title {
-        (format!("{} {}/{}",
-                 status,
-                        summary.nb_ok, summary.nb_ok + summary.nb_err))
+            (format!("{} {}/{}",
+                 status, summary.nb_ok, summary.nb_ok + summary.nb_err))
         }
     }
 }
