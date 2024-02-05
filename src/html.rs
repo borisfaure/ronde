@@ -1,6 +1,6 @@
-use crate::runner::CommandResult;
+use crate::history::{CommandHistory, History};
+use crate::summary::Summary;
 use maud::{html, Markup, PreEscaped, Render, DOCTYPE};
-use std::vec::Vec;
 
 /// Render a header
 fn header(summary: &Summary) -> Markup {
@@ -17,15 +17,19 @@ fn header(summary: &Summary) -> Markup {
 }
 
 /// Render a CommandResult
-impl Render for CommandResult {
+impl Render for CommandHistory {
     fn render(&self) -> Markup {
+        html! {
+            (self.name)
+        }
+        /*
         match &self.result {
             Ok(output) => {
                 html! {
                     details class="ok" {
                         summary { (self.config.name) }
-                        pre { (PreEscaped(String::from_utf8_lossy(&output.stdout))) }
-                        pre { (PreEscaped(String::from_utf8_lossy(&output.stderr))) }
+                        pre { (PreEscaped(output.stdout)) }
+                        pre { (PreEscaped(output.stderr)) }
                     }
                 }
             }
@@ -38,28 +42,8 @@ impl Render for CommandResult {
                 }
             }
         }
+        */
     }
-}
-
-/// Summary of the command results
-struct Summary {
-    /// Number of successful commands
-    nb_ok: u32,
-    /// Number of failed commands
-    nb_err: u32,
-}
-
-/// Get Summary of the command results
-fn summary(results: &Vec<CommandResult>) -> Summary {
-    let mut nb_ok = 0;
-    let mut nb_err = 0;
-    for result in results {
-        match &result.result {
-            Ok(_) => nb_ok += 1,
-            Err(_) => nb_err += 1,
-        }
-    }
-    Summary { nb_ok, nb_err }
 }
 
 /// Render a Summary
@@ -82,14 +66,24 @@ impl Render for Summary {
     }
 }
 
+/// Render a History
+impl Render for History {
+    fn render(&self) -> Markup {
+        html! {
+            @for history_item in self.commands.iter() {
+                (history_item)
+            }
+        }
+    }
+}
+
 /// Purpose: Generate HTML from the results of a ronde run.
-pub fn generate(results: &Vec<CommandResult>) -> String {
-    let summary = summary(results);
+pub fn generate(summary: Summary, history: &History) -> String {
     let markup = html! {
         (header(&summary))
         (summary)
-        @for result in results {
-            (result)
+        @for history_item in history.commands.iter() {
+            (history_item)
         }
     };
     markup.into_string()

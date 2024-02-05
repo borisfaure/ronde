@@ -1,4 +1,4 @@
-use crate::runner::{CommandError, CommandResult};
+use crate::runner::{CommandError, CommandOutput, CommandResult};
 use serde_derive::{Deserialize, Serialize};
 use thiserror::Error;
 use tokio::fs;
@@ -29,7 +29,8 @@ impl std::fmt::Display for HistoryError {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct CommandHistoryEntry {
     /// Result of the command
-    pub result: Result<(), HistoryError>,
+    #[serde(with = "serde_yaml::with::singleton_map_recursive")]
+    pub result: Result<Option<CommandOutput>, HistoryError>,
     /// Timestamp when the command was run
     pub timestamp: String,
 }
@@ -89,15 +90,19 @@ impl History {
     }
 
     /// Update the history with new results
-    pub fn update(&mut self, results: &Vec<CommandResult>) {
+    pub fn update(&mut self, results: Vec<CommandResult>) {
         for result in results {
             let command_history = self
                 .commands
                 .iter_mut()
                 .find(|c| c.name == result.config.name);
             let entry = CommandHistoryEntry {
-                result: match &result.result {
-                    Ok(_) => Ok(()),
+                result: match result.result {
+                    Ok(output) => Ok(Some(output)),
+                    Err(CommandError::ReturnedError(e)) => Err(HistoryError::CommandError {
+                        stdout: String::from_utf8_lossy(&e.output.stdout).to_string(),
+                        stderr: String::from_utf8_lossy(&e.output.stderr).to_string(),
+                    }),
                     Err(CommandError::TimedOut(_)) => Err(HistoryError::Timeout),
                     Err(e) => Err(HistoryError::Other {
                         message: e.to_string(),

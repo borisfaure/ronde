@@ -1,8 +1,57 @@
 use crate::config::CommandConfig;
+use serde_derive::{Deserialize, Serialize};
 use std::process::Output;
 use std::time::Duration;
 use thiserror::Error;
 use tokio::process::Command;
+
+/// Command output
+#[derive(Debug, Deserialize, Serialize)]
+pub struct CommandOutput {
+    /// status code
+    pub status: i32,
+    /// stdout
+    pub stdout: String,
+    /// stderr
+    pub stderr: String,
+}
+
+impl From<Output> for CommandOutput {
+    fn from(output: Output) -> Self {
+        CommandOutput {
+            status: output.status.code().unwrap_or(-1i32),
+            stdout: String::from_utf8_lossy(&output.stdout).to_string(),
+            stderr: String::from_utf8_lossy(&output.stderr).to_string(),
+        }
+    }
+}
+
+impl std::fmt::Display for CommandOutput {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(
+            f,
+            "Command Output: code: {}, stdout: {}, stderr: {}",
+            self.status, self.stdout, self.stderr
+        )
+    }
+}
+
+/// Command returned an error
+#[derive(Error, Debug)]
+pub struct ReturnedError {
+    pub output: Output,
+}
+impl std::fmt::Display for ReturnedError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(
+            f,
+            "Command error: code: {}, stdout: {}, stderr: {}",
+            self.output.status.code().unwrap_or(-1i32),
+            String::from_utf8_lossy(&self.output.stdout),
+            String::from_utf8_lossy(&self.output.stderr)
+        )
+    }
+}
 
 /// Command error
 #[derive(Error, Debug)]
@@ -13,6 +62,9 @@ pub enum CommandError {
     /// Command error
     #[error("Command error: {0}")]
     Command(#[from] std::io::Error),
+    /// Returned error
+    #[error("Returned error: {0}")]
+    ReturnedError(#[from] ReturnedError),
 }
 
 /// Command result
@@ -21,7 +73,7 @@ pub struct CommandResult {
     /// Command configuration
     pub config: CommandConfig,
     /// Result of the command
-    pub result: Result<Output, CommandError>,
+    pub result: Result<CommandOutput, CommandError>,
 }
 
 impl CommandResult {
@@ -33,7 +85,7 @@ impl CommandResult {
         }
     }
     /// Create a new CommandResult with an Ok result
-    pub fn ok(config: CommandConfig, output: Output) -> CommandResult {
+    pub fn ok(config: CommandConfig, output: CommandOutput) -> CommandResult {
         CommandResult {
             config,
             result: Ok(output),
@@ -58,7 +110,17 @@ pub async fn execute_command(config: CommandConfig) -> CommandResult {
             )
             .await;
             match output {
-                Ok(Ok(output)) => CommandResult::ok(config, output),
+                Ok(Ok(output)) if output.status.success() => {
+                    CommandResult::ok(config, output.into())
+                }
+                Ok(Ok(output)) => CommandResult::error(
+                    config,
+                    ReturnedError {
+                        output: output.into(),
+                    }
+                    .into(),
+                ),
+
                 Ok(Err(e)) => CommandResult::error(config, e.into()),
                 Err(e) => CommandResult::error(config, e.into()),
             }

@@ -10,6 +10,9 @@ use history::History;
 mod html;
 /// Module to run commands
 mod runner;
+/// Module to summarize results
+mod summary;
+use summary::Summary;
 
 /// Build a Command
 fn build_cli() -> ClapCommand {
@@ -58,9 +61,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut history = History::load(history_file).await?;
 
     history.purge_from_results(&results);
-    history.update(&results);
+    let summary = Summary::from_results(&results);
+    history.update(results);
 
-    let html = html::generate(&results);
+    let html = html::generate(summary, &history);
     let output_file = matches.get_one::<String>("OutputFile").unwrap();
     std::fs::write(output_file, html)?;
 
