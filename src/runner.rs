@@ -6,7 +6,7 @@ use thiserror::Error;
 use tokio::process::Command;
 
 /// Command output
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, PartialEq, Deserialize, Serialize)]
 pub struct CommandOutput {
     /// status code
     pub status: i32,

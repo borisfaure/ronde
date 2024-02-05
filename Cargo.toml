@@ -9,6 +9,8 @@ license = "BSD-2-Clause"
 readme = "README.md"
 
 
+[dev-dependencies]
+tempfile = "3.10"
 
 [dependencies]
 tokio = { version = "1.35", features = ["full"] }

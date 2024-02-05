@@ -4,7 +4,7 @@ use thiserror::Error;
 use tokio::fs;
 
 /// History Result
-#[derive(Error, Debug, Serialize, Deserialize)]
+#[derive(Error, Debug, PartialEq, Serialize, Deserialize)]
 pub enum HistoryError {
     /// Timeout
     Timeout,
@@ -26,7 +26,7 @@ impl std::fmt::Display for HistoryError {
 }
 
 /// History entry for a single command
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, PartialEq)]
 pub struct CommandHistoryEntry {
     /// Result of the command
     #[serde(with = "serde_yaml::with::singleton_map_recursive")]
@@ -36,7 +36,7 @@ pub struct CommandHistoryEntry {
 }
 
 /// History of a single command
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, PartialEq)]
 pub struct CommandHistory {
     /// Name of the command
     pub name: String,
@@ -45,7 +45,7 @@ pub struct CommandHistory {
 }
 
 /// History of commands
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, PartialEq)]
 pub struct History {
     /// Vector of each command's history
     pub commands: Vec<CommandHistory>,
@@ -123,5 +123,102 @@ impl History {
                 }
             }
         }
+    }
+}
+
+/* tests */
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::config::CommandConfig;
+    use tempfile::NamedTempFile;
+
+    #[tokio::test]
+    async fn test_load_save_history() {
+        let history_file = NamedTempFile::new().unwrap();
+        let history_file_path = history_file.path().to_str().unwrap().to_string();
+        let history = History {
+            commands: vec![CommandHistory {
+                name: "test".to_string(),
+                entries: vec![CommandHistoryEntry {
+                    result: Ok(Some(CommandOutput {
+                        status: 0,
+                        stdout: "stdout".to_string(),
+                        stderr: "stderr".to_string(),
+                    })),
+                    timestamp: "2024-02-05T23:11:35Z".to_string(),
+                }],
+            }],
+        };
+
+        history.save(&history_file_path).await.unwrap();
+
+        let loaded_history = History::load(&history_file_path).await.unwrap();
+        assert_eq!(history, loaded_history);
+    }
+
+    #[test]
+    fn test_purge_from_results() {
+        let mut history = History {
+            commands: vec![
+                CommandHistory {
+                    name: "test".to_string(),
+                    entries: vec![],
+                },
+                CommandHistory {
+                    name: "test2".to_string(),
+                    entries: vec![],
+                },
+                CommandHistory {
+                    name: "test3".to_string(),
+                    entries: vec![],
+                },
+                CommandHistory {
+                    name: "test4".to_string(),
+                    entries: vec![],
+                },
+            ],
+        };
+        history.purge_from_results(&vec![
+            CommandResult {
+                config: CommandConfig {
+                    name: "test2".to_string(),
+                    timeout: 0,
+                    run: "test2".to_string(),
+                },
+                result: Ok(CommandOutput {
+                    status: 0,
+                    stdout: "".to_string(),
+                    stderr: "".to_string(),
+                }),
+            },
+            CommandResult {
+                config: CommandConfig {
+                    name: "test3".to_string(),
+                    timeout: 0,
+                    run: "test3".to_string(),
+                },
+                result: Ok(CommandOutput {
+                    status: 0,
+                    stdout: "".to_string(),
+                    stderr: "".to_string(),
+                }),
+            },
+        ]);
+        assert_eq!(
+            history,
+            History {
+                commands: vec![
+                    CommandHistory {
+                        name: "test2".to_string(),
+                        entries: vec![],
+                    },
+                    CommandHistory {
+                        name: "test3".to_string(),
+                        entries: vec![],
+                    },
+                ]
+            }
+        );
     }
 }

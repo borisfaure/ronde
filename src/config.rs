@@ -1,7 +1,7 @@
 use serde_derive::{Deserialize, Serialize};
 use tokio::fs;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 /// Command configuration
 pub struct CommandConfig {
     /// Name of the command
