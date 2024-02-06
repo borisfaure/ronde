@@ -63,6 +63,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     history.purge_from_results(&results);
     let summary = Summary::from_results(&results);
     history.update(results);
+    history.recreate_tags();
 
     let html = html::generate(summary, &history);
     let output_file = matches.get_one::<String>("OutputFile").unwrap();

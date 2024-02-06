@@ -113,13 +113,7 @@ pub async fn execute_command(config: CommandConfig) -> CommandResult {
                 Ok(Ok(output)) if output.status.success() => {
                     CommandResult::ok(config, output.into())
                 }
-                Ok(Ok(output)) => CommandResult::error(
-                    config,
-                    ReturnedError {
-                        output: output.into(),
-                    }
-                    .into(),
-                ),
+                Ok(Ok(output)) => CommandResult::error(config, ReturnedError { output }.into()),
 
                 Ok(Err(e)) => CommandResult::error(config, e.into()),
                 Err(e) => CommandResult::error(config, e.into()),
