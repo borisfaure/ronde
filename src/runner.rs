@@ -6,10 +6,10 @@ use thiserror::Error;
 use tokio::process::Command;
 
 /// Command output
-#[derive(Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct CommandOutput {
     /// status code
-    pub status: i32,
+    pub exit: i32,
     /// stdout
     pub stdout: String,
     /// stderr
@@ -19,7 +19,7 @@ pub struct CommandOutput {
 impl From<Output> for CommandOutput {
     fn from(output: Output) -> Self {
         CommandOutput {
-            status: output.status.code().unwrap_or(-1i32),
+            exit: output.status.code().unwrap_or(-1i32),
             stdout: String::from_utf8_lossy(&output.stdout).to_string(),
             stderr: String::from_utf8_lossy(&output.stderr).to_string(),
         }
@@ -31,7 +31,7 @@ impl std::fmt::Display for CommandOutput {
         write!(
             f,
             "Command Output: code: {}, stdout: {}, stderr: {}",
-            self.status, self.stdout, self.stderr
+            self.exit, self.stdout, self.stderr
         )
     }
 }

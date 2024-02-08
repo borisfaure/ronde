@@ -23,7 +23,7 @@ impl Summary {
     }
 
     /// Is the summary ok?
-    pub fn is_ok(&self) -> bool {
+    pub fn _is_ok(&self) -> bool {
         self.nb_err == 0
     }
 }
