@@ -22,3 +22,11 @@ clap = { version = "4.1", features = ["derive"]}
 thiserror = "1"
 maud = "0.26"
 chrono = { version = "0.4", features = ["serde"] }
+
+[[bin]]
+name = "ronde"
+path = "src/main.rs"
+
+[lib]
+name = "ronde"
+path = "src/lib.rs"

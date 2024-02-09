@@ -1,18 +1,11 @@
 use clap::{Arg, Command as ClapCommand};
 use futures::future::join_all;
 
-/// Module to load configuration
-mod config;
-/// Module to store history
-mod history;
-use history::History;
-/// Module to generate HTML output
-mod html;
-/// Module to run commands
-mod runner;
-/// Module to summarize results
-mod summary;
-use summary::Summary;
+use ronde::config;
+use ronde::history::History;
+use ronde::html;
+use ronde::runner;
+use ronde::summary::Summary;
 
 /// Build a Command
 fn build_cli() -> ClapCommand {
