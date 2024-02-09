@@ -61,7 +61,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let html = html::generate(summary, &history);
     let output_file = matches.get_one::<String>("OutputFile").unwrap();
-    std::fs::write(output_file, html)?;
+    tokio::fs::write(output_file, html).await?;
 
     history.save(history_file).await?;
     Ok(())
