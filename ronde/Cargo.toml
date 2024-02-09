@@ -1,0 +1,15 @@
+[package]
+name = "ronde"
+authors.workspace = true
+description.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+version.workspace = true
+
+
+[dependencies]
+ronde_lib = { path = "../ronde_lib" }
+tokio = { version = "1.35", features = ["full"] }
+futures = "0.3"
+clap = { version = "4.1", features = ["derive"]}

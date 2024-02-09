@@ -1,32 +1,12 @@
-[package]
-name = "ronde"
-version = "0.1.0"
+[workspace]
+members = ["ronde_lib", "ronde"]
+resolver = "2"
+
+[workspace.package]
+version = "1.2.3"
 edition = "2021"
 authors = ["Boris Faure <boris.faure@gmail.com>"]
 description = "Monitor your servers and services with alerting and a simple status page"
 repository = "https://github.com/borisfaure/ronde"
 license = "BSD-2-Clause"
 readme = "README.md"
-
-
-[dev-dependencies]
-tempfile = "3.10"
-
-[dependencies]
-tokio = { version = "1.35", features = ["full"] }
-futures = "0.3"
-serde = "1.0"
-serde_derive = "1.0"
-serde_yaml = "0.9"
-clap = { version = "4.1", features = ["derive"]}
-thiserror = "1"
-maud = "0.26"
-chrono = { version = "0.4", features = ["serde"] }
-
-[[bin]]
-name = "ronde"
-path = "src/main.rs"
-
-[lib]
-name = "ronde"
-path = "src/lib.rs"

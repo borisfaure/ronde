@@ -1,11 +1,11 @@
 use clap::{Arg, Command as ClapCommand};
 use futures::future::join_all;
 
-use ronde::config;
-use ronde::history::History;
-use ronde::html;
-use ronde::runner;
-use ronde::summary::Summary;
+use ronde_lib::config;
+use ronde_lib::history::History;
+use ronde_lib::html;
+use ronde_lib::runner;
+use ronde_lib::summary::Summary;
 
 /// Build a Command
 fn build_cli() -> ClapCommand {

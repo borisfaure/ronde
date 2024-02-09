@@ -170,7 +170,7 @@ impl CommandHistory {
 }
 
 /// History of commands
-#[derive(Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Default, Deserialize, Serialize, PartialEq)]
 pub struct History {
     /// Vector of each command's history
     pub commands: Vec<CommandHistory>,

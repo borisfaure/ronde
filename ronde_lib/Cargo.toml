@@ -1,0 +1,21 @@
+[package]
+name = "ronde_lib"
+authors.workspace = true
+description.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+version.workspace = true
+
+
+[dev-dependencies]
+tempfile = "3.10"
+
+[dependencies]
+tokio = { version = "1.35", features = ["full"] }
+serde = "1.0"
+serde_derive = "1.0"
+serde_yaml = "0.9"
+thiserror = "1"
+maud = "0.26"
+chrono = { version = "0.4", features = ["serde"] }
