@@ -1,4 +1,5 @@
 use crate::runner::{CommandError, CommandOutput, CommandResult};
+use crate::summary::Summary;
 use chrono::{DateTime, Datelike, Timelike, Utc};
 use serde_derive::{Deserialize, Serialize};
 use thiserror::Error;
@@ -266,6 +267,22 @@ impl History {
                 }
             }
         }
+    }
+
+    /// Get the summary of the latest results
+    pub fn get_summary_from_latest(&self) -> Summary {
+        let mut nb_ok = 0;
+        let mut nb_err = 0;
+        for command in self.commands.iter() {
+            if let Some(entry) = command.entries.last() {
+                match &entry.result {
+                    Ok(Some(_)) => nb_ok += 1,
+                    Err(_) => nb_err += 1,
+                    _ => {}
+                }
+            }
+        }
+        Summary { nb_ok, nb_err }
     }
 }
 
