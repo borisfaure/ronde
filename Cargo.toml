@@ -10,3 +10,6 @@ description = "Monitor your servers and services with alerting and a simple stat
 repository = "https://github.com/borisfaure/ronde"
 license = "BSD-2-Clause"
 readme = "README.md"
+
+[workspace.dependencies]
+tokio = { version = "1.35", features = ["full"] }
