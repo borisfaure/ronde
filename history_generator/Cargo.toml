@@ -1,0 +1,15 @@
+[package]
+name = "history_generator"
+authors.workspace = true
+description.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+version.workspace = true
+
+
+[dependencies]
+rand = "0.8"
+ronde_lib = { path = "../ronde_lib" }
+tokio = { version = "1.35", features = ["full"] }
+chrono = { version = "0.4", features = ["serde"] }
