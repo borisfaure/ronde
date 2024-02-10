@@ -7,7 +7,7 @@ use std::vec::Vec;
 
 const NB_COMMANDS: usize = 10;
 const HISTORY_FILE: &str = "history.yaml";
-const PERCENTAGE_OF_SUCCESS: f32 = 0.95;
+const PERCENTAGE_OF_SUCCESS: f32 = 0.97;
 const PERCENTAGE_OF_TIMEOUT: f32 = 0.2;
 const PERCENTAGE_OF_COMMAND_ERROR: f32 = 0.05;
 
