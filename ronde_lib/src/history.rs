@@ -55,7 +55,7 @@ pub enum TimeTag {
 pub struct CommandHistoryEntry {
     /// Result of the command
     #[serde(with = "serde_yaml::with::singleton_map_recursive")]
-    pub result: Result<Option<CommandOutput>, HistoryError>,
+    pub result: Result<CommandOutput, HistoryError>,
     /// Timestamp when the command was run
     pub timestamp: DateTime<Utc>,
     /// Tag for the time aggregation
@@ -240,7 +240,7 @@ impl History {
                 .find(|c| c.name == result.config.name);
             let entry = CommandHistoryEntry {
                 result: match result.result {
-                    Ok(output) => Ok(Some(output)),
+                    Ok(output) => Ok(output),
                     Err(CommandError::ReturnedError(e)) => Err(HistoryError::CommandError {
                         exit: e.output.status.code().unwrap_or(-1i32),
                         stdout: String::from_utf8_lossy(&e.output.stdout).to_string(),
@@ -276,9 +276,8 @@ impl History {
         for command in self.commands.iter() {
             if let Some(entry) = command.entries.last() {
                 match &entry.result {
-                    Ok(Some(_)) => nb_ok += 1,
+                    Ok(_) => nb_ok += 1,
                     Err(_) => nb_err += 1,
-                    _ => {}
                 }
             }
         }
@@ -301,11 +300,11 @@ mod tests {
             commands: vec![CommandHistory {
                 name: "test".to_string(),
                 entries: vec![CommandHistoryEntry {
-                    result: Ok(Some(CommandOutput {
+                    result: Ok(CommandOutput {
                         exit: 0,
                         stdout: "stdout".to_string(),
                         stderr: "stderr".to_string(),
-                    })),
+                    }),
                     timestamp: chrono::Utc::now(),
                     tag: TimeTag::Minute(0),
                 }],
@@ -387,11 +386,11 @@ mod tests {
     fn test_recreate_tags() {
         fn ch_ok(d: &str) -> CommandHistoryEntry {
             CommandHistoryEntry {
-                result: Ok(Some(CommandOutput {
+                result: Ok(CommandOutput {
                     exit: 0,
                     stdout: "".to_string(),
                     stderr: "".to_string(),
-                })),
+                }),
                 timestamp: chrono::DateTime::parse_from_rfc2822(d).unwrap().to_utc(),
                 tag: TimeTag::Minute(0),
             }
@@ -464,11 +463,11 @@ mod tests {
     fn test_recreate_tags_removes_too_old() {
         fn ch_ok(d: &str) -> CommandHistoryEntry {
             CommandHistoryEntry {
-                result: Ok(Some(CommandOutput {
+                result: Ok(CommandOutput {
                     exit: 0,
                     stdout: "".to_string(),
                     stderr: "".to_string(),
-                })),
+                }),
                 timestamp: chrono::DateTime::parse_from_rfc2822(d).unwrap().to_utc(),
                 tag: TimeTag::Minute(0),
             }
@@ -511,11 +510,11 @@ mod tests {
     fn test_rotate() {
         fn ch_ok(d: &str) -> CommandHistoryEntry {
             CommandHistoryEntry {
-                result: Ok(Some(CommandOutput {
+                result: Ok(CommandOutput {
                     exit: 0,
                     stdout: format!("ok_stdout_{}", d),
                     stderr: format!("ok_stderr_{}", d),
-                })),
+                }),
                 timestamp: chrono::DateTime::parse_from_rfc2822(d).unwrap().to_utc(),
                 tag: TimeTag::Minute(0),
             }
@@ -646,11 +645,11 @@ mod tests {
             if tc.is_ok {
                 assert_eq!(
                     che.result,
-                    Ok(Some(CommandOutput {
+                    Ok(CommandOutput {
                         exit: 0,
                         stdout: format!("ok_stdout_{}", tc.datetime),
                         stderr: format!("ok_stderr_{}", tc.datetime),
-                    }))
+                    })
                 );
             } else {
                 assert_eq!(
