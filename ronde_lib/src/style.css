@@ -1,5 +1,41 @@
+:root {
+  --bg: #282828;
+  --fg: #ebdbb2;
+  --err: #cc241d;
+  --ok: #98971a;
+}
+
 body {
-  color: #ddc7a1;
-  background: #32302f;
+  color: var(--fg);
+  background: var(--bg);
   overflow-y: scroll;
+}
+
+.bean {
+    display: inline-block;
+    border-radius: 0.3rem;
+    --hover-scale: 1.5;
+    margin: 0.1rem;
+}
+.bean.ok {
+    background: var(--ok);
+}
+.bean.err {
+    background: var(--err);
+}
+.bean:hover {
+    transform: scale(1.5);
+}
+
+h1 {
+  font-size: 2rem;
+  text-shadow: 0.1rem 0.1rem 0.1rem var(--bg);
+  margin: 1rem;
+  border-radius: 0.3rem;
+}
+h1.ok {
+  background: var(--ok);
+}
+h1.err {
+  background: var(--err);
 }
