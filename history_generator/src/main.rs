@@ -118,6 +118,13 @@ const LOREM_IPSUM: [&str; 103] = [
     "vulputate",
 ];
 
+fn generate_word() -> String {
+    LOREM_IPSUM
+        .choose(&mut rand::thread_rng())
+        .unwrap()
+        .to_string()
+}
+
 fn generate_random_sentence() -> String {
     LOREM_IPSUM
         .choose_multiple(&mut rand::thread_rng(), 10)
@@ -230,7 +237,7 @@ fn gen_command_history(name: String) -> CommandHistory {
 fn gen_history(nb_commands: usize) -> History {
     let mut history = History::default();
     for n in 0..nb_commands {
-        let command_history = gen_command_history(format!("command_{}", n));
+        let command_history = gen_command_history(format!("{}_{}", generate_word(), n));
         history.commands.push(command_history);
     }
     history.recreate_tags();
