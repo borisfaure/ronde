@@ -1,4 +1,5 @@
 use rand::seq::SliceRandom;
+use rand::Rng;
 use ronde_lib::{
     history::{CommandHistory, CommandHistoryEntry, History, HistoryError, TimeTag},
     runner::CommandOutput,
@@ -195,11 +196,11 @@ fn gen_command_history_entry(timestamp: &str) -> CommandHistoryEntry {
         })
     } else if rand::random::<f32>() < PERCENTAGE_OF_TIMEOUT {
         Result::Err(HistoryError::Timeout {
-            timeout: (5_u8 + rand::random::<u8>()) as u16,
+            timeout: rand::thread_rng().gen_range(5_u16..120_u16),
         })
     } else if rand::random::<f32>() < PERCENTAGE_OF_COMMAND_ERROR {
         Result::Err(HistoryError::CommandError {
-            exit: (1_u8 + rand::random::<u8>()) as i32,
+            exit: rand::thread_rng().gen_range(1_i32..255_i32),
             stdout: generate_random_paragraph(),
             stderr: generate_random_paragraph(),
         })
