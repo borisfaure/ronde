@@ -24,6 +24,7 @@ body {
     background: var(--err);
 }
 .bean:hover {
+    cursor: pointer;
     transform: scale(1.5);
 }
 
@@ -38,4 +39,7 @@ h1.ok {
 }
 h1.err {
   background: var(--err);
+}
+.hidden     {
+    display: none;
 }
