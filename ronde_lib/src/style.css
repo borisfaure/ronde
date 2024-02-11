@@ -1,6 +1,8 @@
 :root {
   --bg: #282828;
   --fg: #ebdbb2;
+  --bg2: #504945;
+  --fg2: #fbf1c7;
   --err: #cc241d;
   --ok: #98971a;
 }
@@ -27,6 +29,15 @@ body {
     cursor: pointer;
     transform: scale(1.5);
 }
+pre {
+  margin: 1rem;
+  padding: 1rem;
+  border-radius: 0.3rem;
+  background: var(--bg2);
+  color: var(--fg2);
+  overflow-x: auto;
+  box-shadow: 0.1rem 0.1rem 0.1rem var(--fg);
+}
 
 h1 {
   font-size: 2rem;
@@ -40,6 +51,6 @@ h1.ok {
 h1.err {
   background: var(--err);
 }
-.hidden     {
+.hidden {
     display: none;
 }

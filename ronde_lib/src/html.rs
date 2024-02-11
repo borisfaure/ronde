@@ -90,6 +90,16 @@ impl Render for HistoryEntryEnumeratedDetails<'_> {
                 h3 {
                     (self.entry.timestamp.to_rfc2822())
                 }
+                p { "Command" }
+                pre { (self.entry.command) }
+                @match &self.entry.result {
+                    Ok(output) => {
+                        (output)
+                    }
+                    Err(err) => {
+                        (err)
+                    }
+                }
             }
         }
     }
