@@ -1,6 +1,6 @@
-use crate::history::{CommandHistory, CommandHistoryEntry, History, TimeTag};
+use crate::history::{CommandHistory, CommandHistoryEntry, History, HistoryError, TimeTag};
+use crate::runner::CommandOutput;
 use crate::summary::Summary;
-use chrono::{DateTime, Utc};
 use maud::{html, Markup, PreEscaped, Render, DOCTYPE};
 
 /// Render a header
@@ -10,7 +10,9 @@ fn header(summary: &Summary) -> Markup {
         (DOCTYPE)
         meta charset="utf-8";
         meta name="viewport" content="width=device-width, initial-scale=1";
+        meta http-equiv="Content-Security-Policy" content="script-src 'nonce-ronde'";
         style { (PreEscaped(include_str!("style.css"))) }
+        //script nonce="ronde" { (PreEscaped(include_str!("main.js"))) }
         title {
             (format!("{} {}/{}",
                  status, summary.nb_ok, summary.nb_ok + summary.nb_err))
@@ -28,67 +30,124 @@ impl Render for TimeTag {
     }
 }
 
-/// Summary of a command history entry
-struct CommandHistoryEntrySummary {
-    timestamp: DateTime<Utc>,
-    on_error: bool,
-    tag: TimeTag,
-}
-impl CommandHistoryEntrySummary {
-    fn from_entry(entry: &CommandHistoryEntry) -> Self {
-        CommandHistoryEntrySummary {
-            timestamp: entry.timestamp,
-            on_error: entry.result.is_err(),
-            tag: entry.tag.clone(),
+impl Render for HistoryError {
+    fn render(&self) -> Markup {
+        match self {
+            HistoryError::Timeout => html! {
+                b { "Timeout" }
+            },
+            HistoryError::CommandError {
+                exit,
+                stdout,
+                stderr,
+            } => {
+                html! {
+                    div class="error" {
+                        p { (format!("Exit code: {}", exit)) }
+                        p { "stdout" }
+                        pre { (PreEscaped(stdout)) }
+                        p { "stderr" }
+                        pre { (PreEscaped(stderr)) }
+                    }
+                }
+            }
+            HistoryError::Other { message } => html! {
+                pre {
+                    (message)
+                }
+            },
         }
     }
 }
-impl Render for CommandHistoryEntrySummary {
+
+impl Render for CommandOutput {
     fn render(&self) -> Markup {
-        let klass = if self.on_error { "bean err" } else { "bean ok" };
-        let title = self.timestamp.to_rfc2822();
         html! {
-            div class=(klass) title=(title) {
+            div class="output" {
+
+                p { "stdout" }
+                pre { (PreEscaped(&self.stdout)) }
+                p { "stderr" }
+                pre { (PreEscaped(&self.stderr)) }
+            }
+        }
+    }
+}
+
+fn gen_id(idx: usize, top_idx: usize) -> String {
+    format!("entry_{}_{}", top_idx, idx)
+}
+
+struct HistoryEntryEnumeratedDetails<'a> {
+    idx: usize,
+    top_idx: usize,
+    entry: &'a CommandHistoryEntry,
+}
+impl Render for HistoryEntryEnumeratedDetails<'_> {
+    fn render(&self) -> Markup {
+        html! {
+            div class="hidden" id=(gen_id(self.idx, self.top_idx)) {
+                h3 {
+                    (self.entry.timestamp.to_rfc2822())
+                }
+            }
+        }
+    }
+}
+
+struct HistoryEntryEnumeratedSummary<'a> {
+    idx: usize,
+    top_idx: usize,
+    is_error: bool,
+    timestamp: &'a chrono::DateTime<chrono::Utc>,
+    tag: &'a TimeTag,
+}
+/// Render a HistoryEntryEnumeratedSummary
+impl Render for HistoryEntryEnumeratedSummary<'_> {
+    fn render(&self) -> Markup {
+        let klass = if self.is_error { "bean err" } else { "bean ok" };
+        let title = self.timestamp.to_rfc2822();
+        let toggle = gen_id(self.idx, self.top_idx);
+        html! {
+            div class=(klass) title=(title) data-toggle=(toggle) {
                 (self.tag)
             }
         }
     }
 }
 
+struct CommandHistoryEnumareted<'a> {
+    idx: usize,
+    history_item: &'a CommandHistory,
+}
 /// Render a CommandResult
-impl Render for CommandHistory {
+impl Render for CommandHistoryEnumareted<'_> {
     fn render(&self) -> Markup {
         html! {
             div class="command" {
-                h2 { (self.name) }
+                h2 { (self.history_item.name) }
                 div class="bar" {
-                    @for entry in self.entries.iter() {
-                        (CommandHistoryEntrySummary::from_entry(&entry))
+                    @for (idx,entry) in self.history_item.entries.iter().enumerate() {
+                        (HistoryEntryEnumeratedSummary {
+                            idx,
+                            top_idx: self.idx,
+                            is_error: entry.result.is_err(),
+                            timestamp: &entry.timestamp,
+                            tag: &entry.tag,
+                            })
+                    }
+                }
+                div class="details" {
+                    @for (idx,entry) in self.history_item.entries.iter().enumerate() {
+                        (HistoryEntryEnumeratedDetails {
+                            idx,
+                            top_idx: self.idx,
+                            entry,
+                        })
                     }
                 }
             }
         }
-        /*
-        match &self.result {
-            Ok(output) => {
-                html! {
-                    details class="ok" {
-                        summary { (self.config.name) }
-                        pre { (PreEscaped(output.stdout)) }
-                        pre { (PreEscaped(output.stderr)) }
-                    }
-                }
-            }
-            Err(e) => {
-                html! {
-                    details class="err" {
-                        summary { (self.config.name) }
-                        p { (e) }
-                    }
-                }
-            }
-        }
-        */
     }
 }
 
@@ -116,8 +175,11 @@ impl Render for Summary {
 impl Render for History {
     fn render(&self) -> Markup {
         html! {
-            @for history_item in self.commands.iter() {
-                (history_item)
+            @for (idx, history_item) in self.commands.iter().enumerate() {
+                (CommandHistoryEnumareted {
+                    idx,
+                    history_item,
+                })
             }
         }
     }
@@ -128,9 +190,7 @@ pub fn generate(summary: Summary, history: &History) -> String {
     let markup = html! {
         (header(&summary))
         (summary)
-        @for history_item in history.commands.iter() {
-            (history_item)
-        }
+        (history)
     };
     markup.into_string()
 }
