@@ -17,6 +17,8 @@ fn build_cli() -> ClapCommand {
             Arg::new("ConfigFile")
                 .value_name("YamlConfigFile")
                 .num_args(1)
+                .short('c')
+                .long("config")
                 .required(true)
                 .help("YAML Config file describing the services to monitor"),
         )
