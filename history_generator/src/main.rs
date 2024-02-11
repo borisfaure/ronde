@@ -195,11 +195,11 @@ fn gen_command_history_entry(timestamp: &str) -> CommandHistoryEntry {
         })
     } else if rand::random::<f32>() < PERCENTAGE_OF_TIMEOUT {
         Result::Err(HistoryError::Timeout {
-            timeout: (5 + rand::random::<u8>()) as u16,
+            timeout: (5_u8 + rand::random::<u8>()) as u16,
         })
     } else if rand::random::<f32>() < PERCENTAGE_OF_COMMAND_ERROR {
         Result::Err(HistoryError::CommandError {
-            exit: (1 + rand::random::<u8>()) as i32,
+            exit: (1_u8 + rand::random::<u8>()) as i32,
             stdout: generate_random_paragraph(),
             stderr: generate_random_paragraph(),
         })
