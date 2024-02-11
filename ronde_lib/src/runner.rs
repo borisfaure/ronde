@@ -95,13 +95,42 @@ impl CommandResult {
 
 /// Execute a command
 pub async fn execute_command(config: CommandConfig) -> CommandResult {
-    let child = Command::new("sh")
-        .arg("-c")
-        .arg(&config.run)
-        .kill_on_drop(true)
-        .stdout(std::process::Stdio::piped())
-        .stderr(std::process::Stdio::piped())
-        .spawn();
+    /* There must be a better way to do this */
+    let child = match (config.uid, config.gid) {
+        (Some(uid), Some(gid)) => Command::new("sh")
+            .arg("-c")
+            .arg(&config.run)
+            .kill_on_drop(true)
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::piped())
+            .uid(uid)
+            .gid(gid)
+            .spawn(),
+        (Some(uid), None) => Command::new("sh")
+            .arg("-c")
+            .arg(&config.run)
+            .kill_on_drop(true)
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::piped())
+            .uid(uid)
+            .spawn(),
+        (None, Some(gid)) => Command::new("sh")
+            .arg("-c")
+            .arg(&config.run)
+            .kill_on_drop(true)
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::piped())
+            .gid(gid)
+            .spawn(),
+        (None, None) => Command::new("sh")
+            .arg("-c")
+            .arg(&config.run)
+            .kill_on_drop(true)
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::piped())
+            .spawn(),
+    };
+
     match child {
         Ok(child) => {
             let output = tokio::time::timeout(

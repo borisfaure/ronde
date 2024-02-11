@@ -21,6 +21,10 @@ pub struct CommandConfig {
     pub timeout: Timeout,
     /// Command to run
     pub run: String,
+    /// UID to use to run the command
+    pub uid: Option<u32>,
+    /// GID to use to run the command
+    pub gid: Option<u32>,
 }
 
 #[derive(Debug, PartialEq, Deserialize)]
@@ -53,6 +57,8 @@ commands:
   - name: "test"
     timeout: 10
     run: echo "test"
+    uid: 1000
+    gid: 1234
   - name: "ping localhost"
     run: ping -c 4 localhost
 "#
@@ -67,12 +73,16 @@ commands:
                     CommandConfig {
                         name: "test".to_string(),
                         timeout: Timeout(10),
-                        run: "echo \"test\"".to_string()
+                        run: "echo \"test\"".to_string(),
+                        uid: Some(1000),
+                        gid: Some(1234),
                     },
                     CommandConfig {
                         name: "ping localhost".to_string(),
                         timeout: Timeout(60),
-                        run: "ping -c 4 localhost".to_string()
+                        run: "ping -c 4 localhost".to_string(),
+                        uid: None,
+                        gid: None,
                     }
                 ]
             }
