@@ -12,7 +12,7 @@ fn header(summary: &Summary) -> Markup {
         meta name="viewport" content="width=device-width, initial-scale=1";
         meta http-equiv="Content-Security-Policy" content="script-src 'nonce-ronde'";
         style { (PreEscaped(include_str!("style.css"))) }
-        //script nonce="ronde" { (PreEscaped(include_str!("main.js"))) }
+        script nonce="ronde" { (PreEscaped(include_str!("main.js"))) }
         title {
             (format!("{} {}/{}",
                  status, summary.nb_ok, summary.nb_ok + summary.nb_err))
@@ -86,7 +86,7 @@ struct HistoryEntryEnumeratedDetails<'a> {
 impl Render for HistoryEntryEnumeratedDetails<'_> {
     fn render(&self) -> Markup {
         html! {
-            div class="hidden" id=(gen_id(self.idx, self.top_idx)) {
+            div class="details hidden" id=(gen_id(self.idx, self.top_idx)) {
                 h3 {
                     (self.entry.timestamp.to_rfc2822())
                 }
@@ -137,7 +137,7 @@ impl Render for CommandHistoryEnumareted<'_> {
                             })
                     }
                 }
-                div class="details" {
+                div class="details_container" {
                     @for (idx,entry) in self.history_item.entries.iter().enumerate() {
                         (HistoryEntryEnumeratedDetails {
                             idx,

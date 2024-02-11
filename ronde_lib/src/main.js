@@ -4,11 +4,13 @@ document.addEventListener("DOMContentLoaded", function() {
   beans.forEach(item => {
     item.addEventListener('click', function() {
       const id = this.getAttribute('data-toggle');
-      const elem = document.getElementById(contentId);
-      if elem.classList.contains('hidden') {
+      const elem = document.getElementById(id);
+      const toshow = elem.classList.contains('hidden');
+      document.querySelectorAll('.details').forEach(c => {
+        c.classList.add('hidden');
+      });
+      if (toshow) {
         elem.classList.remove('hidden');
-      } else {
-        elem.classList.add('hidden');
       }
     });
   });
