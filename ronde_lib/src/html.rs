@@ -25,7 +25,13 @@ impl Render for TimeTag {
         match self {
             TimeTag::Minute(m) => html! { (format!("{:02}",m)) },
             TimeTag::Hour(h) => html! { (format!("{:02}",h)) },
-            TimeTag::Day(_) => html! { "D" },
+            TimeTag::Day(0) => html! { "Mo" },
+            TimeTag::Day(1) => html! { "Tu" },
+            TimeTag::Day(2) => html! { "We" },
+            TimeTag::Day(3) => html! { "Th" },
+            TimeTag::Day(4) => html! { "Fr" },
+            TimeTag::Day(5) => html! { "Sa" },
+            TimeTag::Day(_) => html! { "Su" },
         }
     }
 }
