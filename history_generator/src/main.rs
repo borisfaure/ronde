@@ -194,7 +194,9 @@ fn gen_command_history_entry(timestamp: &str) -> CommandHistoryEntry {
             stderr: String::new(),
         })
     } else if rand::random::<f32>() < PERCENTAGE_OF_TIMEOUT {
-        Result::Err(HistoryError::Timeout)
+        Result::Err(HistoryError::Timeout {
+            timeout: (5 + rand::random::<u8>()) as u16,
+        })
     } else if rand::random::<f32>() < PERCENTAGE_OF_COMMAND_ERROR {
         Result::Err(HistoryError::CommandError {
             exit: (1 + rand::random::<u8>()) as i32,

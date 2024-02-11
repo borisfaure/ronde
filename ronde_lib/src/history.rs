@@ -9,7 +9,7 @@ use tokio::fs;
 #[derive(Error, Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum HistoryError {
     /// Timeout
-    Timeout,
+    Timeout { timeout: u16 },
     /// Command error
     CommandError {
         exit: i32,
@@ -22,7 +22,7 @@ pub enum HistoryError {
 impl std::fmt::Display for HistoryError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            HistoryError::Timeout => write!(f, "Timeout"),
+            HistoryError::Timeout { timeout } => write!(f, "Timeout {}s", timeout),
             HistoryError::CommandError {
                 exit,
                 stdout,
@@ -246,7 +246,9 @@ impl History {
                         stdout: String::from_utf8_lossy(&e.output.stdout).to_string(),
                         stderr: String::from_utf8_lossy(&e.output.stderr).to_string(),
                     }),
-                    Err(CommandError::TimedOut(_)) => Err(HistoryError::Timeout),
+                    Err(CommandError::TimedOut(_)) => Err(HistoryError::Timeout {
+                        timeout: result.config.timeout.0,
+                    }),
                     Err(e) => Err(HistoryError::Other {
                         message: e.to_string(),
                     }),
@@ -289,7 +291,7 @@ impl History {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::config::CommandConfig;
+    use crate::config::{CommandConfig, Timeout};
     use tempfile::NamedTempFile;
 
     #[tokio::test]
@@ -343,8 +345,8 @@ mod tests {
             CommandResult {
                 config: CommandConfig {
                     name: "test2".to_string(),
-                    timeout: 0,
                     run: "test2".to_string(),
+                    timeout: Timeout(10),
                 },
                 result: Ok(CommandOutput {
                     exit: 0,
@@ -355,7 +357,7 @@ mod tests {
             CommandResult {
                 config: CommandConfig {
                     name: "test3".to_string(),
-                    timeout: 0,
+                    timeout: Timeout(10),
                     run: "test3".to_string(),
                 },
                 result: Ok(CommandOutput {

@@ -33,8 +33,8 @@ impl Render for TimeTag {
 impl Render for HistoryError {
     fn render(&self) -> Markup {
         match self {
-            HistoryError::Timeout => html! {
-                b { "Timeout" }
+            HistoryError::Timeout { timeout } => html! {
+                b { (format!("Timeout {}s", timeout)) }
             },
             HistoryError::CommandError {
                 exit,

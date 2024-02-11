@@ -105,7 +105,7 @@ pub async fn execute_command(config: CommandConfig) -> CommandResult {
     match child {
         Ok(child) => {
             let output = tokio::time::timeout(
-                Duration::from_secs(config.timeout),
+                Duration::from_secs(config.timeout.0 as u64),
                 child.wait_with_output(),
             )
             .await;
