@@ -12,9 +12,16 @@ pub struct CommandConfig {
     pub run: String,
 }
 
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+/// Configuration
+pub struct Config {
+    /// List of commands to run
+    pub commands: Vec<CommandConfig>,
+}
+
 /// Load configuration from YAML files
-pub async fn load(yaml_file: &String) -> Result<Vec<CommandConfig>, Box<dyn std::error::Error>> {
+pub async fn load(yaml_file: &String) -> Result<Config, Box<dyn std::error::Error>> {
     let file_contents = fs::read_to_string(yaml_file).await?;
-    let commands: Vec<CommandConfig> = serde_yaml::from_str(&file_contents)?;
-    Ok(commands)
+    let config: Config = serde_yaml::from_str(&file_contents)?;
+    Ok(config)
 }
