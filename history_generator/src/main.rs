@@ -130,7 +130,7 @@ fn generate_random_paragraph() -> String {
     for _ in 0..5 {
         sentences.push(generate_random_sentence());
     }
-    sentences.join(". ")
+    sentences.join(".\n")
 }
 
 const TIMESTAMPS: [&str; 50] = [
