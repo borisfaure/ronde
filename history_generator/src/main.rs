@@ -214,6 +214,7 @@ fn gen_command_history_entry(timestamp: &str) -> CommandHistoryEntry {
             .to_utc(),
         tag: TimeTag::Minute(0),
         result,
+        command: generate_random_sentence(),
     }
 }
 

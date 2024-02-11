@@ -60,6 +60,9 @@ pub struct CommandHistoryEntry {
     pub timestamp: DateTime<Utc>,
     /// Tag for the time aggregation
     pub tag: TimeTag,
+    /// Command that was run
+    #[serde(default)]
+    pub command: String,
 }
 impl CommandHistoryEntry {
     /// Merge in an newer entry
@@ -255,6 +258,7 @@ impl History {
                 },
                 timestamp: chrono::Utc::now(),
                 tag: TimeTag::Minute(0),
+                command: result.config.run.clone(),
             };
             match command_history {
                 Some(command_history) => {
@@ -309,6 +313,7 @@ mod tests {
                     }),
                     timestamp: chrono::Utc::now(),
                     tag: TimeTag::Minute(0),
+                    command: "testing".to_string(),
                 }],
             }],
         };
@@ -399,6 +404,7 @@ mod tests {
                 }),
                 timestamp: chrono::DateTime::parse_from_rfc2822(d).unwrap().to_utc(),
                 tag: TimeTag::Minute(0),
+                command: "".to_string(),
             }
         }
         let mut history = CommandHistory {
@@ -476,6 +482,7 @@ mod tests {
                 }),
                 timestamp: chrono::DateTime::parse_from_rfc2822(d).unwrap().to_utc(),
                 tag: TimeTag::Minute(0),
+                command: "".to_string(),
             }
         }
         let mut history = CommandHistory {
@@ -523,6 +530,7 @@ mod tests {
                 }),
                 timestamp: chrono::DateTime::parse_from_rfc2822(d).unwrap().to_utc(),
                 tag: TimeTag::Minute(0),
+                command: "".to_string(),
             }
         }
         fn ch_err(d: &str) -> CommandHistoryEntry {
@@ -534,6 +542,7 @@ mod tests {
                 }),
                 timestamp: chrono::DateTime::parse_from_rfc2822(d).unwrap().to_utc(),
                 tag: TimeTag::Minute(0),
+                command: "".to_string(),
             }
         }
         struct TestCase {
