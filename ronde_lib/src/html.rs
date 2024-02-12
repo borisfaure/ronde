@@ -115,6 +115,7 @@ struct HistoryEntryEnumeratedSummary<'a> {
     idx: usize,
     top_idx: usize,
     is_error: bool,
+    have_details: bool,
     timestamp: &'a chrono::DateTime<chrono::Utc>,
     tag: &'a TimeTag,
 }
@@ -123,10 +124,18 @@ impl Render for HistoryEntryEnumeratedSummary<'_> {
     fn render(&self) -> Markup {
         let klass = if self.is_error { "bean err" } else { "bean ok" };
         let title = self.timestamp.to_rfc2822();
-        let toggle = gen_id(self.idx, self.top_idx);
-        html! {
-            div class=(klass) title=(title) data-toggle=(toggle) {
-                (self.tag)
+        if self.have_details {
+            let toggle = gen_id(self.idx, self.top_idx);
+            html! {
+                div class=(klass) title=(title) data-toggle=(toggle) {
+                    (self.tag)
+                }
+            }
+        } else {
+            html! {
+                div class=(klass) title=(title) {
+                    (self.tag)
+                }
             }
         }
     }
@@ -147,6 +156,7 @@ impl Render for CommandHistoryEnumareted<'_> {
                         (HistoryEntryEnumeratedSummary {
                             idx,
                             top_idx: self.idx,
+                            have_details: idx == self.history_item.entries.len() - 1 || entry.result.is_err(),
                             is_error: entry.result.is_err(),
                             timestamp: &entry.timestamp,
                             tag: &entry.tag,
@@ -155,11 +165,13 @@ impl Render for CommandHistoryEnumareted<'_> {
                 }
                 div class="details_container" {
                     @for (idx,entry) in self.history_item.entries.iter().enumerate() {
+                        @if idx == self.history_item.entries.len() - 1 || entry.result.is_err() {
                         (HistoryEntryEnumeratedDetails {
                             idx,
                             top_idx: self.idx,
                             entry,
                         })
+                        }
                     }
                 }
             }
