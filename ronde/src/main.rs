@@ -23,15 +23,6 @@ fn build_cli() -> ClapCommand {
                 .help("YAML Config file describing the services to monitor"),
         )
         .arg(
-            Arg::new("HistoryFile")
-                .value_name("HistoryFile")
-                .num_args(1)
-                .short('H')
-                .long("history")
-                .required(true)
-                .help("History file"),
-        )
-        .arg(
             Arg::new("OutputFile")
                 .value_name("HtmlOutputFile")
                 .num_args(1)
@@ -52,8 +43,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let results = join_all(config.commands.into_iter().map(runner::execute_command)).await;
 
-    let history_file = matches.get_one::<String>("HistoryFile").unwrap();
-    let mut history = History::load(history_file).await?;
+    let mut history = History::load(&config.history_file).await?;
 
     history.purge_from_results(&results);
     let summary = Summary::from_results(&results);
@@ -65,6 +55,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let output_file = matches.get_one::<String>("OutputFile").unwrap();
     tokio::fs::write(output_file, html).await?;
 
-    history.save(history_file).await?;
+    history.save(&config.history_file).await?;
     Ok(())
 }

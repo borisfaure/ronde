@@ -30,6 +30,8 @@ pub struct CommandConfig {
 #[derive(Debug, PartialEq, Deserialize)]
 /// Configuration
 pub struct Config {
+    /// File to store history
+    pub history_file: String,
     /// List of commands to run
     pub commands: Vec<CommandConfig>,
 }
@@ -53,6 +55,7 @@ mod tests {
         write!(
             file,
             r#"---
+history_file: "/var/lib/ronde/history"
 commands:
   - name: "test"
     timeout: 10
@@ -69,6 +72,7 @@ commands:
         assert_eq!(
             config,
             Config {
+                history_file: "/var/lib/ronde/history".to_string(),
                 commands: vec![
                     CommandConfig {
                         name: "test".to_string(),
