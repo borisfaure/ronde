@@ -23,15 +23,6 @@ fn build_cli() -> ClapCommand {
                 .required(true)
                 .help("YAML Config file describing the services to monitor"),
         )
-        .arg(
-            Arg::new("OutputFile")
-                .value_name("HtmlOutputFile")
-                .num_args(1)
-                .short('o')
-                .long("output")
-                .required(true)
-                .help("HTML Output file"),
-        )
 }
 
 #[tokio::main]
