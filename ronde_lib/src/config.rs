@@ -34,6 +34,9 @@ pub struct Config {
     pub history_file: String,
     /// List of commands to run
     pub commands: Vec<CommandConfig>,
+    /// Output directory
+    /// This is where the HTML file will be written
+    pub output_dir: String,
 }
 
 /// Load configuration from YAML files
@@ -55,6 +58,7 @@ mod tests {
         write!(
             file,
             r#"---
+output_dir: "/var/www/html"
 history_file: "/var/lib/ronde/history"
 commands:
   - name: "test"
@@ -72,6 +76,7 @@ commands:
         assert_eq!(
             config,
             Config {
+                output_dir: "/var/www/html".to_string(),
                 history_file: "/var/lib/ronde/history".to_string(),
                 commands: vec![
                     CommandConfig {
