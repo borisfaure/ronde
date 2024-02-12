@@ -180,7 +180,7 @@ impl Render for Summary {
             let plural = if self.nb_err == 1 { "" } else { "s" };
             html! {
                 h1 class="err" {
-                    (format!("⚠ {} command{} failed ⚠", self.nb_err, plural))
+                    (format!("⚠ {} command{} failed", self.nb_err, plural))
                 }
             }
         }
