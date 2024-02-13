@@ -122,7 +122,13 @@ struct HistoryEntryEnumeratedSummary<'a> {
 /// Render a HistoryEntryEnumeratedSummary
 impl Render for HistoryEntryEnumeratedSummary<'_> {
     fn render(&self) -> Markup {
-        let klass = if self.is_error { "bean err" } else { "bean ok" };
+        let class_tag = match self.tag {
+            TimeTag::Minute(_) => "minute",
+            TimeTag::Hour(_) => "hour",
+            TimeTag::Day(_) => "day",
+        };
+        let class_err = if self.is_error { "err" } else { "ok" };
+        let klass = format!("bean {} {}", class_tag, class_err);
         let title = self.timestamp.to_rfc2822();
         if self.have_details {
             let toggle = gen_id(self.idx, self.top_idx);

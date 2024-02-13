@@ -4,7 +4,9 @@
   --bg2: #504945;
   --fg2: #fbf1c7;
   --err: #cc241d;
+  --err2: #fb4934;
   --ok: #98971a;
+  --ok2: #b8bb26;
 }
 
 body {
@@ -22,8 +24,14 @@ body {
 .bean.ok {
     background: var(--ok);
 }
+.bean.ok.hour {
+    background: var(--ok2);
+}
 .bean.err {
     background: var(--err);
+}
+.bean.err.hour {
+    background: var(--err2);
 }
 .bean:hover {
     cursor: pointer;
