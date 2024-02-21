@@ -28,6 +28,21 @@ pub struct CommandConfig {
 }
 
 #[derive(Debug, PartialEq, Deserialize)]
+/// Pushover configuration
+pub struct PushoverConfig {
+    /// User key
+    pub user: String,
+    /// API token
+    pub token: String,
+}
+
+#[derive(Debug, PartialEq, Deserialize)]
+/// Notification configuration
+pub struct NotificationConfig {
+    pub pushover: Option<PushoverConfig>,
+}
+
+#[derive(Debug, PartialEq, Deserialize)]
 /// Configuration
 pub struct Config {
     /// File to store history
@@ -37,6 +52,8 @@ pub struct Config {
     /// Output directory
     /// This is where the HTML file will be written
     pub output_dir: String,
+    /// Notification configuration
+    pub notifications: Option<NotificationConfig>,
 }
 
 /// Load configuration from YAML files
@@ -60,6 +77,10 @@ mod tests {
             r#"---
 output_dir: "/var/www/html"
 history_file: "/var/lib/ronde/history"
+notifications:
+  pushover:
+    token: "token123"
+    user: "user123"
 commands:
   - name: "test"
     timeout: 10
@@ -76,6 +97,12 @@ commands:
         assert_eq!(
             config,
             Config {
+                notifications: Some(NotificationConfig {
+                    pushover: Some(PushoverConfig {
+                        user: "user123".to_string(),
+                        token: "token123".to_string()
+                    })
+                }),
                 output_dir: "/var/www/html".to_string(),
                 history_file: "/var/lib/ronde/history".to_string(),
                 commands: vec![
