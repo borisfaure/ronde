@@ -5,6 +5,7 @@ use std::path::PathBuf;
 use ronde_lib::config;
 use ronde_lib::history::History;
 use ronde_lib::html;
+use ronde_lib::notifications::check_and_send_notifications;
 use ronde_lib::runner;
 use ronde_lib::summary::Summary;
 
@@ -47,6 +48,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut output_path = PathBuf::from(config.output_dir);
     output_path.push("index.html");
     tokio::fs::write(output_path.as_path(), html).await?;
+
+    if let Some(ref nconfig) = config.notifications {
+        check_and_send_notifications(nconfig, &history).await?;
+    }
 
     history.save(&config.history_file).await?;
     Ok(())
