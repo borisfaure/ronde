@@ -170,6 +170,24 @@ impl CommandHistory {
                 _ => false,
             });
     }
+
+    /// Return true if the last entry is an error an the previous one, if any, is not
+    pub fn is_new_error(&self) -> bool {
+        if let Some(last) = self.entries.last() {
+            if let Err(_) = last.result {
+                if self.entries.len() > 1 {
+                    if let Some(previous) = self.entries.get(self.entries.len() - 2) {
+                        if let Ok(_) = previous.result {
+                            return true;
+                        }
+                    }
+                } else {
+                    return true;
+                }
+            }
+        }
+        false
+    }
 }
 
 /// History of commands
@@ -677,5 +695,68 @@ mod tests {
                 );
             }
         }
+    }
+
+    #[test]
+    fn test_is_new_error() {
+        let mut history = CommandHistory {
+            name: "test".to_string(),
+            entries: vec![],
+        };
+        // empty history
+        assert_eq!(history.is_new_error(), false);
+
+        history.entries.push(CommandHistoryEntry {
+            result: Ok(CommandOutput {
+                exit: 0,
+                stdout: "".to_string(),
+                stderr: "".to_string(),
+            }),
+            timestamp: chrono::Utc::now(),
+            tag: TimeTag::Minute(0),
+            command: "".to_string(),
+        });
+        // single entry is ok => no new error
+        assert_eq!(history.is_new_error(), false);
+
+        history.entries.push(CommandHistoryEntry {
+            result: Err(HistoryError::CommandError {
+                exit: -1i32,
+                stdout: "".to_string(),
+                stderr: "".to_string(),
+            }),
+            timestamp: chrono::Utc::now(),
+            tag: TimeTag::Minute(0),
+            command: "".to_string(),
+        });
+        // newer entry is an error and previous one is not => new error
+        assert_eq!(history.is_new_error(), true);
+
+        history.entries.push(CommandHistoryEntry {
+            result: Err(HistoryError::CommandError {
+                exit: -1i32,
+                stdout: "".to_string(),
+                stderr: "".to_string(),
+            }),
+            timestamp: chrono::Utc::now(),
+            tag: TimeTag::Minute(0),
+            command: "".to_string(),
+        });
+        // newer entry is an error and previous one is also an error => no new error
+        assert_eq!(history.is_new_error(), false);
+
+        history.entries.clear();
+        history.entries.push(CommandHistoryEntry {
+            result: Err(HistoryError::CommandError {
+                exit: -1i32,
+                stdout: "".to_string(),
+                stderr: "".to_string(),
+            }),
+            timestamp: chrono::Utc::now(),
+            tag: TimeTag::Minute(0),
+            command: "".to_string(),
+        });
+        // single entry is an error => new error
+        assert_eq!(history.is_new_error(), true);
     }
 }
