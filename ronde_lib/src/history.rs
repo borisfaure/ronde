@@ -174,10 +174,10 @@ impl CommandHistory {
     /// Return true if the last entry is an error an the previous one, if any, is not
     pub fn is_new_error(&self) -> bool {
         if let Some(last) = self.entries.last() {
-            if let Err(_) = last.result {
+            if last.result.is_err() {
                 if self.entries.len() > 1 {
                     if let Some(previous) = self.entries.get(self.entries.len() - 2) {
-                        if let Ok(_) = previous.result {
+                        if previous.result.is_ok() {
                             return true;
                         }
                     }
