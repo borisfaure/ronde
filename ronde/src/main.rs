@@ -2,7 +2,7 @@ use clap::{Arg, Command as ClapCommand};
 use futures::future::join_all;
 use std::path::PathBuf;
 
-use ronde_lib::config;
+use ronde_lib::config::Config;
 use ronde_lib::history::History;
 use ronde_lib::html;
 use ronde_lib::notifications::check_and_send_notifications;
@@ -32,7 +32,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let matches = build_cli().get_matches();
 
     let yaml_file = matches.get_one::<String>("ConfigFile").unwrap();
-    let config = config::load(yaml_file).await?;
+    let config = Config::load(yaml_file).await?;
 
     let results = join_all(config.commands.into_iter().map(runner::execute_command)).await;
 

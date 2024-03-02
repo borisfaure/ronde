@@ -57,11 +57,13 @@ pub struct Config {
     pub notifications: Option<NotificationConfig>,
 }
 
-/// Load configuration from YAML files
-pub async fn load(yaml_file: &String) -> Result<Config, RondeError> {
-    let file_contents = fs::read_to_string(yaml_file).await?;
-    let config: Config = serde_yaml::from_str(&file_contents)?;
-    Ok(config)
+impl Config {
+    /// Load configuration from YAML files
+    pub async fn load(yaml_file: &String) -> Result<Self, RondeError> {
+        let file_contents = fs::read_to_string(yaml_file).await?;
+        let config: Config = serde_yaml::from_str(&file_contents)?;
+        Ok(config)
+    }
 }
 
 #[cfg(test)]
@@ -94,7 +96,7 @@ commands:
         )
         .unwrap();
         let yaml_file = file.path().to_str().unwrap().to_string();
-        let config = load(&yaml_file).await.unwrap();
+        let config = Config::load(&yaml_file).await.unwrap();
         assert_eq!(
             config,
             Config {
