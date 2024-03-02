@@ -1,3 +1,4 @@
+use crate::error::RondeError;
 use serde_derive::Deserialize;
 use tokio::fs;
 
@@ -57,7 +58,7 @@ pub struct Config {
 }
 
 /// Load configuration from YAML files
-pub async fn load(yaml_file: &String) -> Result<Config, Box<dyn std::error::Error>> {
+pub async fn load(yaml_file: &String) -> Result<Config, RondeError> {
     let file_contents = fs::read_to_string(yaml_file).await?;
     let config: Config = serde_yaml::from_str(&file_contents)?;
     Ok(config)

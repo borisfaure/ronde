@@ -1,5 +1,7 @@
 /// Module to load configuration
 pub mod config;
+/// Module to handle errors
+pub mod error;
 /// Module to store history
 pub mod history;
 /// Module to generate HTML output

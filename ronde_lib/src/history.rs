@@ -1,3 +1,4 @@
+use crate::error::RondeError;
 use crate::runner::{CommandError, CommandOutput, CommandResult};
 use crate::summary::Summary;
 use chrono::{DateTime, Datelike, Timelike, Utc};
@@ -214,19 +215,9 @@ impl History {
     }
 }
 
-#[derive(Error, Debug)]
-pub enum HistoryIoError {
-    /// IO Error
-    #[error("IO Error: {0}")]
-    IoError(#[from] std::io::Error),
-    /// Serde Error
-    #[error("Serde Error: {0}")]
-    SerdeError(#[from] serde_yaml::Error),
-}
-
 impl History {
     /// Load history from a file
-    pub async fn load(history_file: &String) -> Result<Self, HistoryIoError> {
+    pub async fn load(history_file: &String) -> Result<Self, RondeError> {
         match fs::read_to_string(history_file).await {
             Ok(contents) => {
                 let history: History = serde_yaml::from_str(&contents)?;
@@ -235,12 +226,12 @@ impl History {
             Err(ref e) if e.kind() == std::io::ErrorKind::NotFound => Ok(History {
                 commands: Vec::new(),
             }),
-            Err(e) => Err(HistoryIoError::IoError(e)),
+            Err(e) => Err(RondeError::IoError(e)),
         }
     }
 
     /// Save history to a file
-    pub async fn save(&self, history_file: &String) -> Result<(), HistoryIoError> {
+    pub async fn save(&self, history_file: &String) -> Result<(), RondeError> {
         let bytes = serde_yaml::to_string(self)?;
         fs::write(history_file, &bytes).await?;
         Ok(())
