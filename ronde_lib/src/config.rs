@@ -1,5 +1,7 @@
 use crate::error::RondeError;
 use serde_derive::Deserialize;
+use std::collections::HashSet;
+use thiserror::Error;
 use tokio::fs;
 
 /// Timeout in seconds
@@ -12,7 +14,7 @@ impl Default for Timeout {
     }
 }
 
-#[derive(Debug, PartialEq, Deserialize)]
+#[derive(Debug, Default, PartialEq, Deserialize)]
 /// Command configuration
 pub struct CommandConfig {
     /// Name of the command
@@ -43,7 +45,21 @@ pub struct NotificationConfig {
     pub pushover: Option<PushoverConfig>,
 }
 
-#[derive(Debug, PartialEq, Deserialize)]
+/// Error type for configuration
+#[derive(Error, Debug)]
+pub enum ConfigError {
+    /// IO Error
+    #[error("IO Error: {0}")]
+    IoError(#[from] std::io::Error),
+    /// SerdeYaml Error
+    #[error("Serde YAML Error: {0}")]
+    SerdeYamlError(#[from] serde_yaml::Error),
+    /// Command name is not unique
+    #[error("Command name {0} is not unique")]
+    NotUniqueCommandName(String),
+}
+
+#[derive(Debug, Default, PartialEq, Deserialize)]
 /// Configuration
 pub struct Config {
     /// File to store history
@@ -62,7 +78,20 @@ impl Config {
     pub async fn load(yaml_file: &String) -> Result<Self, RondeError> {
         let file_contents = fs::read_to_string(yaml_file).await?;
         let config: Config = serde_yaml::from_str(&file_contents)?;
+        config.check_unique_command_names()?;
         Ok(config)
+    }
+
+    /// Check that all the command names are unique
+    pub fn check_unique_command_names(&self) -> Result<(), ConfigError> {
+        let mut names = HashSet::new();
+        for command in &self.commands {
+            if names.contains(&command.name) {
+                return Err(ConfigError::NotUniqueCommandName(command.name.clone()));
+            }
+            names.insert(command.name.clone());
+        }
+        Ok(())
     }
 }
 
@@ -126,5 +155,27 @@ commands:
                 ]
             }
         );
+    }
+
+    #[test]
+    fn test_check_unique_command_names() {
+        let config = Config {
+            notifications: None,
+            output_dir: "/var/www/html".to_string(),
+            history_file: "/var/lib/ronde/history".to_string(),
+            commands: vec![
+                CommandConfig {
+                    name: "ping localhost".to_string(),
+                    run: "ping -c 4 localhost".to_string(),
+                    ..Default::default()
+                },
+                CommandConfig {
+                    name: "ping localhost".to_string(),
+                    run: "ping -c 4 localhost".to_string(),
+                    ..Default::default()
+                },
+            ],
+        };
+        assert!(config.check_unique_command_names().is_err());
     }
 }

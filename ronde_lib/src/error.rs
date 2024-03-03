@@ -8,4 +8,7 @@ pub enum RondeError {
     /// SerdeYaml Error
     #[error("Serde YAML Error: {0}")]
     SerdeYamlError(#[from] serde_yaml::Error),
+    /// Config Error
+    #[error("Config Error: {0}")]
+    ConfigError(#[from] crate::config::ConfigError),
 }
