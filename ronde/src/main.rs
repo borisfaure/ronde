@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use ronde_lib::config::Config;
 use ronde_lib::history::History;
 use ronde_lib::html;
-use ronde_lib::notifications::check_and_send_notifications;
+use ronde_lib::notification::check_and_send_notifications;
 use ronde_lib::runner;
 use ronde_lib::summary::Summary;
 
