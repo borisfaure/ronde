@@ -189,6 +189,20 @@ impl CommandHistory {
         }
         false
     }
+
+    /// Return true if the last entry is a success and the previous one, if any, is an error
+    pub fn is_back_from_failure(&self) -> bool {
+        if let Some(last) = self.entries.last() {
+            if last.result.is_ok() && self.entries.len() > 1 {
+                if let Some(previous) = self.entries.get(self.entries.len() - 2) {
+                    if previous.result.is_err() {
+                        return true;
+                    }
+                }
+            }
+        }
+        false
+    }
 }
 
 /// History of commands

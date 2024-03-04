@@ -30,19 +30,25 @@ pub struct CommandConfig {
     pub gid: Option<u32>,
 }
 
-#[derive(Debug, PartialEq, Deserialize)]
+#[derive(Debug, Default, PartialEq, Deserialize)]
 /// Pushover configuration
 pub struct PushoverConfig {
     /// User key
     pub user: String,
     /// API token
     pub token: String,
+    /// Optional url to link to
+    pub url: Option<String>,
 }
 
-#[derive(Debug, PartialEq, Deserialize)]
+#[derive(Debug, Default, PartialEq, Deserialize)]
 /// Notification configuration
 pub struct NotificationConfig {
+    /// Pushover configuration
     pub pushover: Option<PushoverConfig>,
+    /// Notify on success after failure
+    #[serde(default)]
+    pub notify_on_success_after_failure: bool,
 }
 
 /// Error type for configuration
@@ -132,8 +138,10 @@ commands:
                 notifications: Some(NotificationConfig {
                     pushover: Some(PushoverConfig {
                         user: "user123".to_string(),
-                        token: "token123".to_string()
-                    })
+                        token: "token123".to_string(),
+                        ..Default::default()
+                    }),
+                    ..Default::default()
                 }),
                 output_dir: "/var/www/html".to_string(),
                 history_file: "/var/lib/ronde/history".to_string(),
