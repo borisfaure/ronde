@@ -2,6 +2,8 @@ use crate::history::{CommandHistory, CommandHistoryEntry, History, HistoryError,
 use crate::runner::CommandOutput;
 use crate::summary::Summary;
 use maud::{html, Markup, PreEscaped, Render, DOCTYPE};
+use std::path::PathBuf;
+use tokio::fs;
 
 /// Render a header
 fn header(summary: &Summary) -> Markup {
@@ -11,8 +13,8 @@ fn header(summary: &Summary) -> Markup {
         meta charset="utf-8";
         meta name="viewport" content="width=device-width, initial-scale=1";
         meta http-equiv="Content-Security-Policy" content="script-src 'nonce-ronde'";
-        style { (PreEscaped(include_str!("style.css"))) }
-        script nonce="ronde" { (PreEscaped(include_str!("main.js"))) }
+        link rel="stylesheet" href="style.css";
+        script src="main.js" {};
         title {
             (format!("{} {}/{}",
                  status, summary.nb_ok, summary.nb_ok + summary.nb_err))
@@ -227,4 +229,34 @@ pub fn generate(summary: Summary, history: &History) -> String {
         (history)
     };
     markup.into_string()
+}
+
+/// Write a static file into the output directory if it does not exist or if
+/// the size is different.
+async fn write_static_file(
+    output_dir: &str,
+    filename: &str,
+    content: &str,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let mut output_path = PathBuf::from(output_dir);
+    output_path.push(filename);
+    let path = output_path.as_path();
+    match fs::metadata(path).await {
+        Ok(metadata) if metadata.len() != content.len() as u64 => {
+            fs::write(path, content).await?;
+        }
+        Err(_) => {
+            fs::write(path, content).await?;
+        }
+        _ => {}
+    }
+    Ok(())
+}
+
+/// Generate auxiliary files into the output directory if they do not exist or
+/// it their size is different.
+pub async fn generate_auxiliary_files(output_dir: &str) -> Result<(), Box<dyn std::error::Error>> {
+    write_static_file(output_dir, "style.css", include_str!("style.css")).await?;
+    write_static_file(output_dir, "main.js", include_str!("main.js")).await?;
+    Ok(())
 }

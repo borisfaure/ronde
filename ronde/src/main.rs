@@ -45,6 +45,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     history.rotate();
 
     let html = html::generate(summary, &history);
+    html::generate_auxiliary_files(&config.output_dir).await?;
     let mut output_path = PathBuf::from(config.output_dir);
     output_path.push("index.html");
     tokio::fs::write(output_path.as_path(), html).await?;
