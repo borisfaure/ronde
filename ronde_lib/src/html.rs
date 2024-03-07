@@ -1,7 +1,9 @@
+use crate::error::RondeError;
 use crate::history::{CommandHistory, CommandHistoryEntry, History, HistoryError, TimeTag};
 use crate::runner::CommandOutput;
 use crate::summary::Summary;
 use maud::{html, Markup, PreEscaped, Render, DOCTYPE};
+use serde_derive::Serialize;
 use std::path::PathBuf;
 use tokio::fs;
 
@@ -253,10 +255,120 @@ async fn write_static_file(
     Ok(())
 }
 
+/// CommandHistoryEntrySummary
+#[derive(Debug, Serialize)]
+struct CommandHistoryEntrySummary {
+    #[serde(rename = "t")]
+    timestamp: String,
+    #[serde(rename = "v")]
+    tag_value: String,
+    #[serde(rename = "k")]
+    tag_kind: String,
+    #[serde(rename = "e")]
+    is_error: bool,
+}
+impl CommandHistoryEntrySummary {
+    /// Create a new CommandHistoryEntrySummary
+    fn new(entry: &CommandHistoryEntry) -> CommandHistoryEntrySummary {
+        let (tag_kind, tag_value) = match entry.tag {
+            TimeTag::Minute(m) => ("m".to_string(), format!("{:02}", m)),
+            TimeTag::Hour(h) => ("h".to_string(), format!("{:02}", h)),
+            TimeTag::Day(d) => match d {
+                0 => ("d".to_string(), "Mo".to_string()),
+                1 => ("d".to_string(), "Tu".to_string()),
+                2 => ("d".to_string(), "We".to_string()),
+                3 => ("d".to_string(), "Th".to_string()),
+                4 => ("d".to_string(), "Fr".to_string()),
+                5 => ("d".to_string(), "Sa".to_string()),
+                _ => ("d".to_string(), "Su".to_string()),
+            },
+        };
+        CommandHistoryEntrySummary {
+            timestamp: entry.timestamp.to_rfc2822(),
+            tag_value,
+            tag_kind,
+            is_error: entry.result.is_err(),
+        }
+    }
+}
+
+/// CommandHistorySummary
+#[derive(Debug, Serialize)]
+struct CommandHistorySummary {
+    #[serde(rename = "n")]
+    name: String,
+    #[serde(rename = "e")]
+    entries: Vec<CommandHistoryEntrySummary>,
+}
+
+/// HistorySummary
+#[derive(Debug, Serialize)]
+struct HistorySummary {
+    #[serde(rename = "c")]
+    commands: Vec<CommandHistorySummary>,
+}
+
+impl HistorySummary {
+    /// Create a new HistorySummary
+    fn new(history: &History) -> HistorySummary {
+        let mut commands = Vec::new();
+        for command in &history.commands {
+            let entries = command
+                .entries
+                .iter()
+                .map(|entry| CommandHistoryEntrySummary::new(entry))
+                .collect();
+            commands.push(CommandHistorySummary {
+                name: command.name.clone(),
+                entries,
+            });
+        }
+        HistorySummary { commands }
+    }
+}
+
+/// Main JSON structure
+#[derive(Debug, Serialize)]
+struct MainJson {
+    #[serde(rename = "s")]
+    summary: Summary,
+    #[serde(rename = "h")]
+    history: HistorySummary,
+    #[serde(rename = "t")]
+    title: String,
+}
+
+impl MainJson {
+    /// Create a new MainJson
+    fn new(summary: Summary, history: &History, title: String) -> MainJson {
+        MainJson {
+            summary,
+            history: HistorySummary::new(history),
+            title,
+        }
+    }
+}
+
+/// Generate the main.json file into the output directory.
+pub fn generate_main(
+    summary: Summary,
+    history: &History,
+    name: String,
+) -> Result<String, RondeError> {
+    let main = MainJson::new(summary, history, name);
+    Ok(serde_json::to_string(&main)?)
+}
+
 /// Generate auxiliary files into the output directory if they do not exist or
 /// it their size is different.
 pub async fn generate_auxiliary_files(output_dir: &str) -> Result<(), Box<dyn std::error::Error>> {
-    write_static_file(output_dir, "style.css", include_str!("style.css")).await?;
-    write_static_file(output_dir, "main.js", include_str!("main.js")).await?;
+    write_static_file(output_dir, "style.css", include_str!("../assets/style.css")).await?;
+    write_static_file(output_dir, "main.js", include_str!("../assets/main.js")).await?;
+    write_static_file(
+        output_dir,
+        "index.html",
+        include_str!("../assets/index.html"),
+    )
+    .await?;
     Ok(())
 }

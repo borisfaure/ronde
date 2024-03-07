@@ -68,6 +68,8 @@ pub enum ConfigError {
 #[derive(Debug, Default, PartialEq, Deserialize)]
 /// Configuration
 pub struct Config {
+    /// Name of the site to display
+    pub name: String,
     /// File to store history
     pub history_file: String,
     /// List of commands to run
@@ -115,6 +117,7 @@ mod tests {
             r#"---
 output_dir: "/var/www/html"
 history_file: "/var/lib/ronde/history"
+name: "Ronde"
 notifications:
   pushover:
     token: "token123"
@@ -143,6 +146,7 @@ commands:
                     }),
                     ..Default::default()
                 }),
+                name: "Ronde".to_string(),
                 output_dir: "/var/www/html".to_string(),
                 history_file: "/var/lib/ronde/history".to_string(),
                 commands: vec![
@@ -168,6 +172,7 @@ commands:
     #[test]
     fn test_check_unique_command_names() {
         let config = Config {
+            name: "Ronde".to_string(),
             notifications: None,
             output_dir: "/var/www/html".to_string(),
             history_file: "/var/lib/ronde/history".to_string(),

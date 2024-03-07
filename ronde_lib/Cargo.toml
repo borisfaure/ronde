@@ -16,6 +16,7 @@ tokio.workspace = true
 serde = "1.0"
 serde_derive = "1.0"
 serde_yaml = "0.9"
+serde_json = "1.0"
 thiserror = "1"
 maud = "0.26"
 chrono = { version = "0.4", features = ["serde"] }

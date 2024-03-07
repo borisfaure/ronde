@@ -1,6 +1,8 @@
 use crate::runner::CommandResult;
+use serde_derive::Serialize;
 
 /// Summary of the command results
+#[derive(Debug, Serialize)]
 pub struct Summary {
     /// Number of successful commands
     pub nb_ok: u32,
