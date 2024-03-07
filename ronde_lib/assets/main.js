@@ -3,10 +3,9 @@ function processSummary(summary, title) {
   // Update Title
   const status = (summary.nb_err == 0)? '\u{2714}' : '\u{2718}';
   const total = summary.nb_err + summary.nb_ok;
-  document.title = `${status} ${summary.nb_err}/${total} - ${title}`;
+  document.title = `${status} ${summary.nb_ok}/${total} - ${title}`;
   // Update Summary
   const h1 = document.getElementById('summary');
-  console.log(h1);
   if (summary.nb_err == 0) {
     h1.classList.add('ok');
     h1.classList.remove('err');
@@ -19,6 +18,33 @@ function processSummary(summary, title) {
   }
 }
 
+function processCommands(commands) {
+  const container = document.getElementById('commands');
+  container.innerHTML = '';
+
+  commands.forEach(command => {
+    const div = document.createElement('div');
+    div.classList.add('command');
+    const name = document.createElement('h2');
+    name.innerHTML = command.n;
+    div.appendChild(name);
+
+    const bar = document.createElement('div');
+    bar.classList.add('bar');
+    for (const e of command.e) {
+      const bean = document.createElement('div');
+      bean.classList.add('bean');
+      bean.classList.add(e.e ? 'err': 'ok');
+      bean.classList.add(e.k == 'd' ? 'day' : (e.k == 'h' ? 'hour' : 'minute'));
+      bean.setAttribute('title', e.t);
+      bean.innerHTML = e.v;
+      bar.appendChild(bean);
+    }
+    div.appendChild(bar);
+    container.appendChild(div);
+  });
+}
+
 async function populate() {
   const requestURL = "main.json";
   const request = new Request(requestURL);
@@ -27,7 +53,7 @@ async function populate() {
 
   const main = JSON.parse(mainText);
   processSummary(main.s, main.t);
-  //processCommands(main.h);
+  processCommands(main.c);
 }
 
 document.addEventListener("DOMContentLoaded", function() {

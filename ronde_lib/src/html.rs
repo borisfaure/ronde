@@ -301,39 +301,13 @@ struct CommandHistorySummary {
     entries: Vec<CommandHistoryEntrySummary>,
 }
 
-/// HistorySummary
-#[derive(Debug, Serialize)]
-struct HistorySummary {
-    #[serde(rename = "c")]
-    commands: Vec<CommandHistorySummary>,
-}
-
-impl HistorySummary {
-    /// Create a new HistorySummary
-    fn new(history: &History) -> HistorySummary {
-        let mut commands = Vec::new();
-        for command in &history.commands {
-            let entries = command
-                .entries
-                .iter()
-                .map(|entry| CommandHistoryEntrySummary::new(entry))
-                .collect();
-            commands.push(CommandHistorySummary {
-                name: command.name.clone(),
-                entries,
-            });
-        }
-        HistorySummary { commands }
-    }
-}
-
 /// Main JSON structure
 #[derive(Debug, Serialize)]
 struct MainJson {
     #[serde(rename = "s")]
     summary: Summary,
-    #[serde(rename = "h")]
-    history: HistorySummary,
+    #[serde(rename = "c")]
+    commands: Vec<CommandHistorySummary>,
     #[serde(rename = "t")]
     title: String,
 }
@@ -341,9 +315,21 @@ struct MainJson {
 impl MainJson {
     /// Create a new MainJson
     fn new(summary: Summary, history: &History, title: String) -> MainJson {
+        let commands = history
+            .commands
+            .iter()
+            .map(|command| CommandHistorySummary {
+                name: command.name.clone(),
+                entries: command
+                    .entries
+                    .iter()
+                    .map(|entry| CommandHistoryEntrySummary::new(entry))
+                    .collect(),
+            })
+            .collect();
         MainJson {
             summary,
-            history: HistorySummary::new(history),
+            commands,
             title,
         }
     }
