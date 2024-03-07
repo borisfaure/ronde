@@ -323,7 +323,7 @@ impl MainJson {
                 entries: command
                     .entries
                     .iter()
-                    .map(|entry| CommandHistoryEntrySummary::new(entry))
+                    .map(CommandHistoryEntrySummary::new)
                     .collect(),
             })
             .collect();
