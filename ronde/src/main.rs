@@ -1,6 +1,5 @@
 use clap::{Arg, Command as ClapCommand};
 use futures::future::join_all;
-use std::path::PathBuf;
 
 use ronde_lib::config::Config;
 use ronde_lib::history::History;
@@ -44,11 +43,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     history.recreate_tags();
     history.rotate();
 
-    let html = html::generate(summary, &history);
+    html::generate_json_files(&config.output_dir, summary, &history, "Ronde".to_string()).await?;
     html::generate_auxiliary_files(&config.output_dir).await?;
-    let mut output_path = PathBuf::from(config.output_dir);
-    output_path.push("index.html");
-    tokio::fs::write(output_path.as_path(), html).await?;
 
     if let Some(ref nconfig) = config.notifications {
         check_and_send_notifications(nconfig, &history).await?;

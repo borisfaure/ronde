@@ -1,46 +1,12 @@
-use crate::error::RondeError;
 use crate::history::{CommandHistory, CommandHistoryEntry, History, HistoryError, TimeTag};
-use crate::runner::CommandOutput;
 use crate::summary::Summary;
 use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
-use maud::{html, Markup, PreEscaped, Render, DOCTYPE};
 use serde_derive::Serialize;
+use std::collections::HashMap;
 use std::path::PathBuf;
 use tokio::fs;
 
-/// Render a header
-fn header(summary: &Summary) -> Markup {
-    let status = if summary.nb_err == 0 { "✔" } else { "✘" };
-    html! {
-        (DOCTYPE)
-        meta charset="utf-8";
-        meta name="viewport" content="width=device-width, initial-scale=1";
-        meta http-equiv="Content-Security-Policy" content="script-src 'nonce-ronde'";
-        link rel="stylesheet" href="style.css";
-        script src="main.js" {};
-        title {
-            (format!("{} {}/{}",
-                 status, summary.nb_ok, summary.nb_ok + summary.nb_err))
-        }
-    }
-}
-
-impl Render for TimeTag {
-    fn render(&self) -> Markup {
-        match self {
-            TimeTag::Minute(m) => html! { (format!("{:02}",m)) },
-            TimeTag::Hour(h) => html! { (format!("{:02}",h)) },
-            TimeTag::Day(0) => html! { "Mo" },
-            TimeTag::Day(1) => html! { "Tu" },
-            TimeTag::Day(2) => html! { "We" },
-            TimeTag::Day(3) => html! { "Th" },
-            TimeTag::Day(4) => html! { "Fr" },
-            TimeTag::Day(5) => html! { "Sa" },
-            TimeTag::Day(_) => html! { "Su" },
-        }
-    }
-}
-
+/*
 impl Render for HistoryError {
     fn render(&self) -> Markup {
         match self {
@@ -152,86 +118,78 @@ impl Render for HistoryEntryEnumeratedSummary<'_> {
     }
 }
 
-struct CommandHistoryEnumareted<'a> {
-    idx: usize,
-    history_item: &'a CommandHistory,
+*/
+
+///
+#[derive(Debug, Serialize, PartialEq)]
+pub struct CommandHistoryEntryDetails {
+    pub is_error: bool,
+    pub exit: Option<i32>,
+    pub timeout: Option<u16>,
+    pub stdout: Option<String>,
+    pub stderr: Option<String>,
+    pub message: Option<String>,
+    pub command: String,
 }
-/// Render a CommandResult
-impl Render for CommandHistoryEnumareted<'_> {
-    fn render(&self) -> Markup {
-        html! {
-            div class="command" {
-                h2 { (self.history_item.name) }
-                div class="bar" {
-                    @for (idx,entry) in self.history_item.entries.iter().enumerate() {
-                        (HistoryEntryEnumeratedSummary {
-                            idx,
-                            top_idx: self.idx,
-                            have_details: idx == self.history_item.entries.len() - 1 || entry.result.is_err(),
-                            is_error: entry.result.is_err(),
-                            timestamp: &entry.timestamp,
-                            tag: &entry.tag,
-                            })
-                    }
-                }
-                div class="details_container" {
-                    @for (idx,entry) in self.history_item.entries.iter().enumerate() {
-                        @if idx == self.history_item.entries.len() - 1 || entry.result.is_err() {
-                        (HistoryEntryEnumeratedDetails {
-                            idx,
-                            top_idx: self.idx,
-                            entry,
-                        })
-                        }
-                    }
-                }
+impl CommandHistoryEntryDetails {
+    /// Create a new CommandHistoryEntryDetails
+    pub fn new(entry: &CommandHistoryEntry) -> CommandHistoryEntryDetails {
+        let (is_error, exit, timeout, stdout, stderr, message) = match &entry.result {
+            Ok(output) => (
+                false,
+                Some(output.exit),
+                None,
+                Some(output.stdout.clone()),
+                Some(output.stderr.clone()),
+                None,
+            ),
+            Err(HistoryError::Timeout { timeout }) => {
+                (true, None, Some(*timeout), None, None, None)
             }
+            Err(HistoryError::CommandError {
+                exit,
+                stdout,
+                stderr,
+            }) => (
+                true,
+                Some(*exit),
+                None,
+                Some(stdout.clone()),
+                Some(stderr.clone()),
+                None,
+            ),
+            Err(HistoryError::Other { message }) => {
+                (true, None, None, None, None, Some(message.clone()))
+            }
+        };
+        CommandHistoryEntryDetails {
+            is_error,
+            exit,
+            timeout,
+            stdout,
+            stderr,
+            message,
+            command: entry.command.clone(),
         }
     }
 }
 
-/// Render a Summary
-impl Render for Summary {
-    fn render(&self) -> Markup {
-        if self.nb_err == 0 {
-            html! {
-                h1 class="ok" {
-                    "✔ All Systems Operational"
-                }
-            }
-        } else {
-            let plural = if self.nb_err == 1 { "" } else { "s" };
-            html! {
-                h1 class="err" {
-                    (format!("⚠ {} command{} failed", self.nb_err, plural))
-                }
-            }
-        }
-    }
+/// History details of a command
+#[derive(Debug, Serialize)]
+struct CommandHistoryDetails {
+    h: HashMap<String, CommandHistoryEntryDetails>,
 }
 
-/// Render a History
-impl Render for History {
-    fn render(&self) -> Markup {
-        html! {
-            @for (idx, history_item) in self.commands.iter().enumerate() {
-                (CommandHistoryEnumareted {
-                    idx,
-                    history_item,
-                })
-            }
+impl CommandHistoryDetails {
+    /// Create a new CommandHistoryDetails
+    fn new(history: &CommandHistory) -> CommandHistoryDetails {
+        let mut h = HashMap::new();
+        for entry in history.entries.iter() {
+            let details = CommandHistoryEntryDetails::new(entry);
+            h.insert(entry.timestamp.to_rfc2822(), details);
         }
+        CommandHistoryDetails { h }
     }
-}
-
-/// Purpose: Generate HTML from the results of a ronde run.
-pub fn generate(summary: Summary, history: &History) -> String {
-    let markup = html! {
-        (header(&summary))
-        (summary)
-        (history)
-    };
-    markup.into_string()
 }
 
 /// Write a static file into the output directory if it does not exist or if
@@ -345,16 +303,6 @@ impl MainJson {
     }
 }
 
-/// Generate the main.json file into the output directory.
-pub fn generate_main(
-    summary: Summary,
-    history: &History,
-    name: String,
-) -> Result<String, RondeError> {
-    let main = MainJson::new(summary, history, name);
-    Ok(serde_json::to_string(&main)?)
-}
-
 /// Generate auxiliary files into the output directory if they do not exist or
 /// it their size is different.
 pub async fn generate_auxiliary_files(output_dir: &str) -> Result<(), Box<dyn std::error::Error>> {
@@ -366,5 +314,30 @@ pub async fn generate_auxiliary_files(output_dir: &str) -> Result<(), Box<dyn st
         include_str!("../assets/index.html"),
     )
     .await?;
+    Ok(())
+}
+
+/// Generate JSON files into the output directory
+pub async fn generate_json_files(
+    output_dir: &str,
+    summary: Summary,
+    history: &History,
+    name: String,
+) -> Result<(), Box<dyn std::error::Error>> {
+    for command in &history.commands {
+        let command_history_details = CommandHistoryDetails::new(command);
+        let json = serde_json::to_string(&command_history_details)?;
+        let mut output_path = PathBuf::from(output_dir);
+        output_path.push(format!("{}.json", generate_id(&command.name)));
+        let path = output_path.as_path();
+        fs::write(path, json).await?;
+    }
+
+    let mut output_path = PathBuf::from(output_dir);
+    output_path.push("main.json");
+    let path = output_path.as_path();
+    let main = MainJson::new(summary, history, name);
+    let main_json = serde_json::to_string(&main)?;
+    fs::write(path, main_json).await?;
     Ok(())
 }
