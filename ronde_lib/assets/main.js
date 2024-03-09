@@ -54,13 +54,22 @@ function processCommands(commands) {
           details.appendChild(pre);
           return;
         }
-        pre.innerHTML = JSON.stringify(data[command.i], null, 2);
+        const d = history[timestamp];
+        pre.innerHTML = JSON.stringify(d, null, 2);
         details.appendChild(pre);
       }
       bean.addEventListener('click', async function() {
         const id = command.i;
+        const details = document.getElementById(id);
+        const toshow = details.children.length === 0;
+        console.log('toshow', toshow);
+        document.querySelectorAll('.details').forEach(c => {
+          c.innerHTML = '';
+        });
+        if (!toshow) {
+          return;
+        }
         if (data[command.i] === undefined) {
-          const details = document.getElementById(id);
           details.innerHTML = '';
           const pre = document.createElement('pre');
           pre.innerHTML = 'Loading...';
@@ -77,22 +86,12 @@ function processCommands(commands) {
         } else {
           renderDetails(command.i, e.t);
         }
-        const timestamp = this.getAttribute('title');
-        const elem = document.getElementById(id);
-        const toshow = elem.classList.contains('hidden');
-        document.querySelectorAll('.details').forEach(c => {
-          c.classList.add('hidden');
-        });
-        if (toshow) {
-          elem.classList.remove('hidden');
-        }
       });
       bar.appendChild(bean);
     }
     div.appendChild(bar);
     const details = document.createElement('div');
-    details.classList.add('container_details');
-    details.classList.add('hidden');
+    details.classList.add('details');
     details.setAttribute('id', command.i);
     div.appendChild(details);
     container.appendChild(div);
