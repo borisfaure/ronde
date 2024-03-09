@@ -116,8 +116,8 @@ impl CommandHistory {
     pub fn recreate_tags(&mut self) {
         if let Some(latest_timestamp) = self.latest_timestamp() {
             let last_day = latest_timestamp.date_naive()
-                - chrono::Duration::hours(25)
-                - chrono::Duration::days(7);
+                - chrono::TimeDelta::try_hours(25).unwrap()
+                - chrono::TimeDelta::try_days(7).unwrap();
             self.entries.retain_mut(|entry| {
                 let delta = latest_timestamp.signed_duration_since(entry.timestamp);
                 if delta.num_hours() < 1 {
