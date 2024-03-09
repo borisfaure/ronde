@@ -123,12 +123,24 @@ impl Render for HistoryEntryEnumeratedSummary<'_> {
 ///
 #[derive(Debug, Serialize, PartialEq)]
 pub struct CommandHistoryEntryDetails {
+    #[serde(rename = "i")]
     pub is_error: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "x")]
     pub exit: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "t")]
     pub timeout: Option<u16>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "o")]
     pub stdout: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "e")]
     pub stderr: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "m")]
     pub message: Option<String>,
+    #[serde(rename = "c")]
     pub command: String,
 }
 impl CommandHistoryEntryDetails {
