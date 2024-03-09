@@ -2,6 +2,7 @@ use crate::error::RondeError;
 use crate::history::{CommandHistory, CommandHistoryEntry, History, HistoryError, TimeTag};
 use crate::runner::CommandOutput;
 use crate::summary::Summary;
+use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
 use maud::{html, Markup, PreEscaped, Render, DOCTYPE};
 use serde_derive::Serialize;
 use std::path::PathBuf;
@@ -297,6 +298,8 @@ impl CommandHistoryEntrySummary {
 struct CommandHistorySummary {
     #[serde(rename = "n")]
     name: String,
+    #[serde(rename = "i")]
+    id: String,
     #[serde(rename = "e")]
     entries: Vec<CommandHistoryEntrySummary>,
 }
@@ -312,6 +315,12 @@ struct MainJson {
     title: String,
 }
 
+/// Generate an id from a name
+/// The id is suitable as an HTML id & a filename
+fn generate_id(name: &String) -> String {
+    URL_SAFE_NO_PAD.encode(blake3::hash(name.as_bytes()).as_bytes())
+}
+
 impl MainJson {
     /// Create a new MainJson
     fn new(summary: Summary, history: &History, title: String) -> MainJson {
@@ -320,6 +329,7 @@ impl MainJson {
             .iter()
             .map(|command| CommandHistorySummary {
                 name: command.name.clone(),
+                id: generate_id(&command.name),
                 entries: command
                     .entries
                     .iter()
