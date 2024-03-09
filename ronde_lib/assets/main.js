@@ -47,22 +47,60 @@ function processCommands(commands) {
       const renderDetails = function (id, timestamp) {
         const details = document.getElementById(id);
         details.innerHTML = '';
-        const pre = document.createElement('pre');
         let history = data[command.i];
         if (history === undefined || history[timestamp] === undefined) {
+          const pre = document.createElement('pre');
           pre.innerHTML = 'Oops, no data available for this timestamp';
           details.appendChild(pre);
           return;
         }
         const d = history[timestamp];
-        pre.innerHTML = JSON.stringify(d, null, 2);
-        details.appendChild(pre);
+        h3 = document.createElement('h3');
+        h3.innerHTML = 'timestamp';
+        const p_command = document.createElement('p');
+        p_command.innerHTML = 'Command:';
+        const p_pre = document.createElement('pre');
+        p_pre.innerHTML = d['c'];
+        details.append(h3, p_command, p_pre);
+
+        if (d['x'] !== undefined) {
+          const p_exit = document.createElement('p');
+          p_exit.innerHTML = `Exit Code: ${d['x']}`;
+          details.appendChild(p_exit);
+        }
+        if (d['t'] !== undefined) {
+          const p_timeout = document.createElement('p');
+          p_timeout.innerHTML = `Timeout: ${d['t']} seconds`;
+          details.appendChild(p_timeout);
+        }
+
+        if (d['m'] !== undefined) {
+          const p_message = document.createElement('p');
+          p_message.innerHTML = 'Error message:';
+          const pre = document.createElement('pre');
+          pre.innerHTML = d['m'];
+          details.append(p_message, pre);
+        }
+
+        if (d['o'] !== undefined) {
+          const p_output = document.createElement('p');
+          p_output.innerHTML = 'Output:';
+          const pre = document.createElement('pre');
+          pre.innerHTML = d['o'];
+          details.append(p_output, pre);
+        }
+        if (d['e'] !== undefined) {
+          const p_error = document.createElement('p');
+          p_error.innerHTML = 'Error:';
+          const pre = document.createElement('pre');
+          pre.innerHTML = d['e'];
+          details.append(p_error, pre);
+        }
       }
       bean.addEventListener('click', async function() {
         const id = command.i;
         const details = document.getElementById(id);
-        const toshow = details.children.length === 0;
-        console.log('toshow', toshow);
+        const toshow = details.children.length === 0 || details.getAttribute('data-timestamp') !== e.t;
         document.querySelectorAll('.details').forEach(c => {
           c.innerHTML = '';
         });
@@ -71,6 +109,7 @@ function processCommands(commands) {
         }
         if (data[command.i] === undefined) {
           details.innerHTML = '';
+          details.setAttribute('data-timestamp', e.t);
           const pre = document.createElement('pre');
           pre.innerHTML = 'Loading...';
           details.appendChild(pre);
