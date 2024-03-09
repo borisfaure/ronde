@@ -1,4 +1,7 @@
 :root {
+    color-scheme: dark light;
+}
+:root {
   --bg: #282828;
   --fg: #ebdbb2;
   --bg2: #504945;
@@ -7,6 +10,30 @@
   --err2: #fb4934;
   --ok: #98971a;
   --ok2: #b8bb26;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #282828;
+    --fg: #ebdbb2;
+    --bg2: #504945;
+    --fg2: #fbf1c7;
+    --err: #cc241d;
+    --err2: #fb4934;
+    --ok: #98971a;
+    --ok2: #b8bb26;
+  }
+}
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f8f8f8;
+    --fg: #282828;
+    --bg2: #e8e8e8;
+    --fg2: #282828;
+    --err: #cc241d;
+    --err2: #fb4934;
+    --ok: #98971a;
+    --ok2: #b8bb26;
+  }
 }
 
 body {
