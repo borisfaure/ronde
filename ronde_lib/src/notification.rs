@@ -83,7 +83,7 @@ pub async fn check_and_send_notifications(
             send_notification(
                 config,
                 &command_history.name,
-                NotificationType::Failure,
+                ntype,
                 command_history.entries.last(),
             )
             .await?;
