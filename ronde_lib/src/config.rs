@@ -74,6 +74,10 @@ pub struct Config {
     pub history_file: String,
     /// List of commands to run
     pub commands: Vec<CommandConfig>,
+    /// UID to send notifications and write files
+    pub uid: Option<u32>,
+    /// GID to send notifications and write files
+    pub gid: Option<u32>,
     /// Output directory
     /// This is where the HTML file will be written
     pub output_dir: String,
@@ -164,7 +168,8 @@ commands:
                         uid: None,
                         gid: None,
                     }
-                ]
+                ],
+                ..Default::default()
             }
         );
     }
@@ -188,6 +193,7 @@ commands:
                     ..Default::default()
                 },
             ],
+            ..Default::default()
         };
         assert!(config.check_unique_command_names().is_err());
     }

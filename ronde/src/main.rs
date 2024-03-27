@@ -7,6 +7,9 @@ use ronde_lib::notification::check_and_send_notifications;
 use ronde_lib::runner;
 use ronde_lib::summary::Summary;
 
+use libc::setgid;
+use libc::setuid;
+
 /// Display usage
 fn usage() {
     println!("ronde version {}", env!("CARGO_PKG_VERSION"));
@@ -36,7 +39,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let results = join_all(config.commands.into_iter().map(runner::execute_command)).await;
 
-    /* TODO: stop running as root */
+    /* Stop running as root */
+    if let Some(gid) = config.gid {
+        let result = unsafe { setgid(gid) };
+        if result != 0 {
+            panic!("Failed to setgid to {}", gid);
+        }
+    }
+    if let Some(uid) = config.uid {
+        let result = unsafe { setuid(uid) };
+        if result != 0 {
+            panic!("Failed to setuid to {}", uid);
+        }
+    }
 
     let mut history = History::load(&config.history_file).await?;
 
