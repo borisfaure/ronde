@@ -703,13 +703,14 @@ mod tests {
     }
 
     #[test]
-    fn test_is_new_error() {
+    fn test_is_new_error_back_from_failure() {
         let mut history = CommandHistory {
             name: "test".to_string(),
             entries: vec![],
         };
         // empty history
         assert_eq!(history.is_new_error(), false);
+        assert_eq!(history.is_back_from_failure(), false);
 
         history.entries.push(CommandHistoryEntry {
             result: Ok(CommandOutput {
@@ -721,8 +722,9 @@ mod tests {
             tag: TimeTag::Minute(0),
             command: "".to_string(),
         });
-        // single entry is ok => no new error
+        // single entry is ok => no new error, not back from failure
         assert_eq!(history.is_new_error(), false);
+        assert_eq!(history.is_back_from_failure(), false);
 
         history.entries.push(CommandHistoryEntry {
             result: Err(HistoryError::CommandError {
@@ -734,8 +736,9 @@ mod tests {
             tag: TimeTag::Minute(0),
             command: "".to_string(),
         });
-        // newer entry is an error and previous one is not => new error
+        // newer entry is an error and previous one is not => new error, not back from failure
         assert_eq!(history.is_new_error(), true);
+        assert_eq!(history.is_back_from_failure(), false);
 
         history.entries.push(CommandHistoryEntry {
             result: Err(HistoryError::CommandError {
@@ -747,8 +750,37 @@ mod tests {
             tag: TimeTag::Minute(0),
             command: "".to_string(),
         });
-        // newer entry is an error and previous one is also an error => no new error
+        // newer entry is an error and previous one is also an error => no new error, not back from failure
         assert_eq!(history.is_new_error(), false);
+        assert_eq!(history.is_back_from_failure(), false);
+
+        history.entries.push(CommandHistoryEntry {
+            result: Ok(CommandOutput {
+                exit: 0,
+                stdout: "".to_string(),
+                stderr: "".to_string(),
+            }),
+            timestamp: chrono::Utc::now(),
+            tag: TimeTag::Minute(0),
+            command: "".to_string(),
+        });
+        // newer entry is ok and previous one is an error => no new error, back from failure
+        assert_eq!(history.is_new_error(), false);
+        assert_eq!(history.is_back_from_failure(), true);
+
+        history.entries.push(CommandHistoryEntry {
+            result: Ok(CommandOutput {
+                exit: 0,
+                stdout: "".to_string(),
+                stderr: "".to_string(),
+            }),
+            timestamp: chrono::Utc::now(),
+            tag: TimeTag::Minute(0),
+            command: "".to_string(),
+        });
+        // newer entry is ok and previous one is also ok => no new error, not back from failure
+        assert_eq!(history.is_new_error(), false);
+        assert_eq!(history.is_back_from_failure(), false);
 
         history.entries.clear();
         history.entries.push(CommandHistoryEntry {
@@ -761,7 +793,8 @@ mod tests {
             tag: TimeTag::Minute(0),
             command: "".to_string(),
         });
-        // single entry is an error => new error
+        // single entry is an error => new error, not back from failure
         assert_eq!(history.is_new_error(), true);
+        assert_eq!(history.is_back_from_failure(), false);
     }
 }
