@@ -73,13 +73,10 @@ async fn send_notification(
             .send()
             .await?;
         if !response.status().is_success() {
-            return Err(NotificationError::PushoverError(
-                format!(
-                    "Failed to send notification to pushover: {}",
-                    response.text().await?
-                )
-                .into(),
-            ));
+            return Err(NotificationError::PushoverError(format!(
+                "Failed to send notification to pushover: {}",
+                response.text().await?
+            )));
         }
     }
     Ok(())
