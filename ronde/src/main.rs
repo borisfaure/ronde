@@ -30,7 +30,11 @@ fn usage() {
 /// Main function
 async fn main() -> Result<(), RondeError> {
     let args: Vec<String> = std::env::args().collect();
-    if args.len() != 2 || args[1] == "-h" || args[1] == "--help" {
+    if args.len() != 2 {
+        usage();
+        return Err(RondeError::CliError());
+    }
+    if args[1] == "-h" || args[1] == "--help" {
         usage();
         return Ok(());
     }

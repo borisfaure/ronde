@@ -14,4 +14,7 @@ pub enum RondeError {
     /// History Error
     #[error("History Error: {0}")]
     HistoryError(#[from] crate::history::HistoryError),
+    /// Cli Error
+    #[error("Cli Error")]
+    CliError(),
 }
