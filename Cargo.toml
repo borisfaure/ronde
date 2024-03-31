@@ -3,7 +3,7 @@ members = ["ronde_lib", "ronde", "history_renderer", "history_generator"]
 resolver = "2"
 
 [workspace.package]
-version = "1.2.3"
+version = "1.0.0"
 edition = "2021"
 authors = ["Boris Faure <boris.faure@gmail.com>"]
 description = "Monitor your servers and services with alerting and a simple status page"
