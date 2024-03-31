@@ -37,18 +37,23 @@ async fn send_notification(
             NotificationType::BackFromFailure => format!("Back from failure on {}", command_name),
             NotificationType::None => "None".to_string(),
         };
-        let mut details: String = String::new();
-        if notification_type == NotificationType::Failure {
-            if let Some(last) = last_run {
-                details = match last.result {
-                    Ok(ref output) => format!(
-                        "{}\n>>>STDERR\n{}\n>>>STDOUT\n{}",
-                        last.command, &output.stderr, &output.stdout
-                    ),
-                    Err(ref e) => format!("{}\n{}", last.command, e),
-                };
+        let mut details = match notification_type {
+            NotificationType::Failure => {
+                if let Some(last) = last_run {
+                    match last.result {
+                        Ok(ref output) => format!(
+                            "{}\n>>>STDERR\n{}\n>>>STDOUT\n{}",
+                            last.command, &output.stderr, &output.stdout
+                        ),
+                        Err(ref e) => format!("{}\n{}", last.command, e),
+                    }
+                } else {
+                    "The command has failed.".to_string()
+                }
             }
-        }
+            NotificationType::BackFromFailure => title.clone(),
+            NotificationType::None => title.clone(),
+        };
         // Truncate the message to 1024 characters.
         if details.len() > 1024 {
             details.drain(..1024).for_each(drop);
