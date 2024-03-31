@@ -1,6 +1,6 @@
 use serde_derive::Deserialize;
+use snafu::prelude::*;
 use std::collections::HashSet;
-use thiserror::Error;
 use tokio::fs;
 
 /// Timeout in seconds
@@ -51,17 +51,23 @@ pub struct NotificationConfig {
 }
 
 /// Error type for configuration
-#[derive(Error, Debug)]
+#[derive(Debug, Snafu)]
 pub enum ConfigError {
     /// IO Error
-    #[error("IO Error: {0}")]
-    IoError(#[from] std::io::Error),
+    #[snafu(display("Unable to read {}: {}", path, source))]
+    IoError {
+        source: std::io::Error,
+        path: String,
+    },
     /// SerdeYaml Error
-    #[error("Serde YAML Error: {0}")]
-    SerdeYamlError(#[from] serde_yaml::Error),
+    #[snafu(display("Serde YAML Error on {}: {}", path, source))]
+    SerdeYamlError {
+        source: serde_yaml::Error,
+        path: String,
+    },
     /// Command name is not unique
-    #[error("Command name {0} is not unique")]
-    NotUniqueCommandName(String),
+    #[snafu(display("Command name {} is not unique", cmd))]
+    NotUniqueCommandName { cmd: String },
 }
 
 #[derive(Debug, Default, PartialEq, Deserialize)]
@@ -86,9 +92,13 @@ pub struct Config {
 
 impl Config {
     /// Load configuration from YAML files
-    pub async fn load(yaml_file: &String) -> Result<Self, ConfigError> {
-        let file_contents = fs::read_to_string(yaml_file).await?;
-        let config: Config = serde_yaml::from_str(&file_contents)?;
+    pub async fn load(yaml_file: &str) -> Result<Self, ConfigError> {
+        let file_contents = fs::read_to_string(yaml_file).await.context(IoSnafu {
+            path: yaml_file.to_string(),
+        })?;
+        let config: Config = serde_yaml::from_str(&file_contents).context(SerdeYamlSnafu {
+            path: yaml_file.to_string(),
+        })?;
         config.check_unique_command_names()?;
         Ok(config)
     }
@@ -98,7 +108,9 @@ impl Config {
         let mut names = HashSet::new();
         for command in &self.commands {
             if names.contains(&command.name) {
-                return Err(ConfigError::NotUniqueCommandName(command.name.clone()));
+                return Err(ConfigError::NotUniqueCommandName {
+                    cmd: command.name.clone(),
+                });
             }
             names.insert(command.name.clone());
         }
