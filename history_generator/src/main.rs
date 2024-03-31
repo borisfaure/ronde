@@ -1,7 +1,7 @@
 use rand::seq::SliceRandom;
 use rand::Rng;
 use ronde_lib::{
-    history::{CommandHistory, CommandHistoryEntry, History, HistoryError, TimeTag},
+    history::{CommandHistory, CommandHistoryEntry, History, HistoryItemError, TimeTag},
     runner::CommandOutput,
 };
 use std::vec::Vec;
@@ -202,17 +202,17 @@ fn gen_command_history_entry(timestamp: &str) -> CommandHistoryEntry {
             stderr: String::new(),
         })
     } else if rand::random::<f32>() < PERCENTAGE_OF_TIMEOUT {
-        Result::Err(HistoryError::Timeout {
+        Result::Err(HistoryItemError::Timeout {
             timeout: rand::thread_rng().gen_range(5_u16..120_u16),
         })
     } else if rand::random::<f32>() < PERCENTAGE_OF_COMMAND_ERROR {
-        Result::Err(HistoryError::CommandError {
+        Result::Err(HistoryItemError::CommandError {
             exit: rand::thread_rng().gen_range(1_i32..255_i32),
             stdout: generate_random_paragraph(),
             stderr: generate_random_paragraph(),
         })
     } else {
-        Result::Err(HistoryError::Other {
+        Result::Err(HistoryItemError::Other {
             message: generate_random_sentence(),
         })
     };

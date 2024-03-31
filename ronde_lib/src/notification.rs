@@ -1,5 +1,17 @@
 use crate::config::NotificationConfig;
 use crate::history::{CommandHistoryEntry, History};
+use thiserror::Error;
+
+#[derive(Debug, Error)]
+/// Error type for notifications
+pub enum NotificationError {
+    /// Reqwest Error
+    #[error("Reqwest Error: {0}")]
+    ReqwestError(#[from] reqwest::Error),
+    /// Error related to sending a notification with Pushover
+    #[error("PushoverError: {0}")]
+    PushoverError(String),
+}
 
 #[derive(Debug, PartialEq)]
 /// The type of notification to send.
@@ -17,7 +29,7 @@ async fn send_notification(
     command_name: &str,
     notification_type: NotificationType,
     last_run: Option<&CommandHistoryEntry>,
-) -> Result<(), Box<dyn std::error::Error>> {
+) -> Result<(), NotificationError> {
     if let Some(ref pushover) = config.pushover {
         let client = reqwest::Client::new();
         let mut title = match notification_type {
@@ -61,7 +73,13 @@ async fn send_notification(
             .send()
             .await?;
         if !response.status().is_success() {
-            return Err(format!("Failed to send notification: {}", response.text().await?).into());
+            return Err(NotificationError::PushoverError(
+                format!(
+                    "Failed to send notification to pushover: {}",
+                    response.text().await?
+                )
+                .into(),
+            ));
         }
     }
     Ok(())
@@ -70,7 +88,7 @@ async fn send_notification(
 pub async fn check_and_send_notifications(
     config: &NotificationConfig,
     history: &History,
-) -> Result<(), Box<dyn std::error::Error>> {
+) -> Result<(), NotificationError> {
     for command_history in &history.commands {
         let ntype = if command_history.is_new_error() {
             NotificationType::Failure

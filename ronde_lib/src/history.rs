@@ -1,4 +1,3 @@
-use crate::error::RondeError;
 use crate::runner::{CommandError, CommandOutput, CommandResult};
 use crate::summary::Summary;
 use chrono::{DateTime, Datelike, Timelike, Utc};
@@ -6,9 +5,20 @@ use serde_derive::{Deserialize, Serialize};
 use thiserror::Error;
 use tokio::fs;
 
-/// History Result
-#[derive(Error, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Error)]
+/// Error type for history
 pub enum HistoryError {
+    /// IO Error
+    #[error("IO Error: {0}")]
+    IoError(#[from] std::io::Error),
+    /// Serde Error
+    #[error("Serde Error: {0}")]
+    SerdeError(#[from] serde_yaml::Error),
+}
+
+/// History Item in error
+#[derive(Error, Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum HistoryItemError {
     /// Timeout
     Timeout { timeout: u16 },
     /// Command error
@@ -20,11 +30,11 @@ pub enum HistoryError {
     /// Other error
     Other { message: String },
 }
-impl std::fmt::Display for HistoryError {
+impl std::fmt::Display for HistoryItemError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            HistoryError::Timeout { timeout } => write!(f, "Timeout {}s", timeout),
-            HistoryError::CommandError {
+            HistoryItemError::Timeout { timeout } => write!(f, "Timeout {}s", timeout),
+            HistoryItemError::CommandError {
                 exit,
                 stdout,
                 stderr,
@@ -35,7 +45,7 @@ impl std::fmt::Display for HistoryError {
                     exit, stdout, stderr
                 )
             }
-            HistoryError::Other { message } => write!(f, "Other error: {}", message),
+            HistoryItemError::Other { message } => write!(f, "Other error: {}", message),
         }
     }
 }
@@ -56,7 +66,7 @@ pub enum TimeTag {
 pub struct CommandHistoryEntry {
     /// Result of the command
     #[serde(with = "serde_yaml::with::singleton_map_recursive")]
-    pub result: Result<CommandOutput, HistoryError>,
+    pub result: Result<CommandOutput, HistoryItemError>,
     /// Timestamp when the command was run
     pub timestamp: DateTime<Utc>,
     /// Tag for the time aggregation
@@ -231,7 +241,7 @@ impl History {
 
 impl History {
     /// Load history from a file
-    pub async fn load(history_file: &String) -> Result<Self, RondeError> {
+    pub async fn load(history_file: &String) -> Result<Self, HistoryError> {
         match fs::read_to_string(history_file).await {
             Ok(contents) => {
                 let history: History = serde_yaml::from_str(&contents)?;
@@ -240,12 +250,12 @@ impl History {
             Err(ref e) if e.kind() == std::io::ErrorKind::NotFound => Ok(History {
                 commands: Vec::new(),
             }),
-            Err(e) => Err(RondeError::IoError(e)),
+            Err(e) => Err(HistoryError::IoError(e)),
         }
     }
 
     /// Save history to a file
-    pub async fn save(&self, history_file: &String) -> Result<(), RondeError> {
+    pub async fn save(&self, history_file: &String) -> Result<(), HistoryError> {
         let bytes = serde_yaml::to_string(self)?;
         fs::write(history_file, &bytes).await?;
         Ok(())
@@ -267,15 +277,15 @@ impl History {
             let entry = CommandHistoryEntry {
                 result: match result.result {
                     Ok(output) => Ok(output),
-                    Err(CommandError::ReturnedError(e)) => Err(HistoryError::CommandError {
+                    Err(CommandError::ReturnedError(e)) => Err(HistoryItemError::CommandError {
                         exit: e.output.status.code().unwrap_or(-1i32),
                         stdout: String::from_utf8_lossy(&e.output.stdout).to_string(),
                         stderr: String::from_utf8_lossy(&e.output.stderr).to_string(),
                     }),
-                    Err(CommandError::TimedOut(_)) => Err(HistoryError::Timeout {
+                    Err(CommandError::TimedOut(_)) => Err(HistoryItemError::Timeout {
                         timeout: result.config.timeout.0,
                     }),
-                    Err(e) => Err(HistoryError::Other {
+                    Err(e) => Err(HistoryItemError::Other {
                         message: e.to_string(),
                     }),
                 },
@@ -558,7 +568,7 @@ mod tests {
         }
         fn ch_err(d: &str) -> CommandHistoryEntry {
             CommandHistoryEntry {
-                result: Err(HistoryError::CommandError {
+                result: Err(HistoryItemError::CommandError {
                     exit: -1i32,
                     stdout: format!("err_stdout_{}", d),
                     stderr: format!("err_stderr_{}", d),
@@ -692,7 +702,7 @@ mod tests {
             } else {
                 assert_eq!(
                     che.result,
-                    Err(HistoryError::CommandError {
+                    Err(HistoryItemError::CommandError {
                         exit: -1i32,
                         stdout: format!("err_stdout_{}", tc.datetime),
                         stderr: format!("err_stderr_{}", tc.datetime),
@@ -727,7 +737,7 @@ mod tests {
         assert_eq!(history.is_back_from_failure(), false);
 
         history.entries.push(CommandHistoryEntry {
-            result: Err(HistoryError::CommandError {
+            result: Err(HistoryItemError::CommandError {
                 exit: -1i32,
                 stdout: "".to_string(),
                 stderr: "".to_string(),
@@ -741,7 +751,7 @@ mod tests {
         assert_eq!(history.is_back_from_failure(), false);
 
         history.entries.push(CommandHistoryEntry {
-            result: Err(HistoryError::CommandError {
+            result: Err(HistoryItemError::CommandError {
                 exit: -1i32,
                 stdout: "".to_string(),
                 stderr: "".to_string(),
@@ -784,7 +794,7 @@ mod tests {
 
         history.entries.clear();
         history.entries.push(CommandHistoryEntry {
-            result: Err(HistoryError::CommandError {
+            result: Err(HistoryItemError::CommandError {
                 exit: -1i32,
                 stdout: "".to_string(),
                 stderr: "".to_string(),

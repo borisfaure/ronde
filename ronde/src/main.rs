@@ -1,6 +1,7 @@
 use futures::future::join_all;
 
 use ronde_lib::config::Config;
+use ronde_lib::error::RondeError;
 use ronde_lib::history::History;
 use ronde_lib::html;
 use ronde_lib::notification::check_and_send_notifications;
@@ -27,7 +28,7 @@ fn usage() {
 
 #[tokio::main]
 /// Main function
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> Result<(), RondeError> {
     let args: Vec<String> = std::env::args().collect();
     if args.len() < 2 || args[1] == "-h" || args[1] == "--help" {
         usage();

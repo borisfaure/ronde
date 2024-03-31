@@ -1,10 +1,22 @@
-use crate::history::{CommandHistory, CommandHistoryEntry, History, HistoryError, TimeTag};
+use crate::history::{CommandHistory, CommandHistoryEntry, History, HistoryItemError, TimeTag};
 use crate::summary::Summary;
 use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
 use serde_derive::Serialize;
 use std::collections::HashMap;
 use std::path::PathBuf;
+use thiserror::Error;
 use tokio::fs;
+
+/// Error type for HTML generation
+#[derive(Error, Debug)]
+pub enum HtmlError {
+    /// IO Error
+    #[error("IO Error: {0}")]
+    IoError(#[from] std::io::Error),
+    /// SerdeJson Error
+    #[error("Serde JSON Error: {0}")]
+    SerdeJsonError(#[from] serde_json::Error),
+}
 
 #[derive(Debug, Serialize, PartialEq)]
 pub struct CommandHistoryEntryDetails {
@@ -40,10 +52,10 @@ impl CommandHistoryEntryDetails {
                 Some(output.stderr.clone()),
                 None,
             ),
-            Err(HistoryError::Timeout { timeout }) => {
+            Err(HistoryItemError::Timeout { timeout }) => {
                 (true, None, Some(*timeout), None, None, None)
             }
-            Err(HistoryError::CommandError {
+            Err(HistoryItemError::CommandError {
                 exit,
                 stdout,
                 stderr,
@@ -55,7 +67,7 @@ impl CommandHistoryEntryDetails {
                 Some(stderr.clone()),
                 None,
             ),
-            Err(HistoryError::Other { message }) => {
+            Err(HistoryItemError::Other { message }) => {
                 (true, None, None, None, None, Some(message.clone()))
             }
         };
@@ -95,7 +107,7 @@ async fn write_static_file(
     output_dir: &str,
     filename: &str,
     content: &str,
-) -> Result<(), Box<dyn std::error::Error>> {
+) -> Result<(), HtmlError> {
     let mut output_path = PathBuf::from(output_dir);
     output_path.push(filename);
     let path = output_path.as_path();
@@ -202,7 +214,7 @@ impl MainJson {
 
 /// Generate auxiliary files into the output directory if they do not exist or
 /// it their size is different.
-pub async fn generate_auxiliary_files(output_dir: &str) -> Result<(), Box<dyn std::error::Error>> {
+pub async fn generate_auxiliary_files(output_dir: &str) -> Result<(), HtmlError> {
     write_static_file(output_dir, "style.css", include_str!("../assets/style.css")).await?;
     write_static_file(output_dir, "main.js", include_str!("../assets/main.js")).await?;
     write_static_file(
@@ -220,7 +232,7 @@ pub async fn generate_json_files(
     summary: Summary,
     history: &History,
     name: String,
-) -> Result<(), Box<dyn std::error::Error>> {
+) -> Result<(), HtmlError> {
     for command in &history.commands {
         let command_history_details = CommandHistoryDetails::new(command);
         let json = serde_json::to_string(&command_history_details)?;

@@ -1,4 +1,3 @@
-use crate::error::RondeError;
 use serde_derive::Deserialize;
 use std::collections::HashSet;
 use thiserror::Error;
@@ -87,7 +86,7 @@ pub struct Config {
 
 impl Config {
     /// Load configuration from YAML files
-    pub async fn load(yaml_file: &String) -> Result<Self, RondeError> {
+    pub async fn load(yaml_file: &String) -> Result<Self, ConfigError> {
         let file_contents = fs::read_to_string(yaml_file).await?;
         let config: Config = serde_yaml::from_str(&file_contents)?;
         config.check_unique_command_names()?;
