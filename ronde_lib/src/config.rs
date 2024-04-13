@@ -59,10 +59,10 @@ pub enum ConfigError {
         source: std::io::Error,
         path: String,
     },
-    /// SerdeYaml Error
-    #[snafu(display("Serde YAML Error on {}: {}", path, source))]
-    SerdeYamlError {
-        source: serde_yaml::Error,
+    /// SerdeToml Error
+    #[snafu(display("Serde TOML Error on {}: {}", path, source))]
+    SerdeTomlError {
+        source: toml::de::Error,
         path: String,
     },
     /// Command name is not unique
@@ -77,8 +77,6 @@ pub struct Config {
     pub name: String,
     /// File to store history
     pub history_file: String,
-    /// List of commands to run
-    pub commands: Vec<CommandConfig>,
     /// UID to send notifications and write files
     pub uid: Option<u32>,
     /// GID to send notifications and write files
@@ -88,16 +86,18 @@ pub struct Config {
     pub output_dir: String,
     /// Notification configuration
     pub notifications: Option<NotificationConfig>,
+    /// List of commands to run
+    pub commands: Vec<CommandConfig>,
 }
 
 impl Config {
-    /// Load configuration from YAML files
-    pub async fn load(yaml_file: &str) -> Result<Self, ConfigError> {
-        let file_contents = fs::read_to_string(yaml_file).await.context(IoSnafu {
-            path: yaml_file.to_string(),
+    /// Load configuration from TOML files
+    pub async fn load(toml_file: &str) -> Result<Self, ConfigError> {
+        let file_contents = fs::read_to_string(toml_file).await.context(IoSnafu {
+            path: toml_file.to_string(),
         })?;
-        let config: Config = serde_yaml::from_str(&file_contents).context(SerdeYamlSnafu {
-            path: yaml_file.to_string(),
+        let config: Config = toml::from_str(&file_contents).context(SerdeTomlSnafu {
+            path: toml_file.to_string(),
         })?;
         config.check_unique_command_names()?;
         Ok(config)
@@ -129,27 +129,27 @@ mod tests {
         let mut file = NamedTempFile::new().unwrap();
         write!(
             file,
-            r#"---
-output_dir: "/var/www/html"
-history_file: "/var/lib/ronde/history"
-name: "Ronde"
-notifications:
-  pushover:
-    token: "token123"
-    user: "user123"
-commands:
-  - name: "test"
-    timeout: 10
-    run: echo "test"
-    uid: 1000
-    gid: 1234
-  - name: "ping localhost"
-    run: ping -c 4 localhost
+            r#"
+output_dir = "/var/www/html"
+history_file= "/var/lib/ronde/history"
+name = "Ronde"
+[notifications.pushover]
+    token = "token123"
+    user = "user123"
+[[commands]]
+    name = "test"
+    timeout = 10
+    run = """echo "test""""
+    uid = 1000
+    gid = 1234
+[[commands]]
+    name = "ping localhost"
+    run = "ping -c 4 localhost"
 "#
         )
         .unwrap();
-        let yaml_file = file.path().to_str().unwrap().to_string();
-        let config = Config::load(&yaml_file).await.unwrap();
+        let cfg_file = file.path().to_str().unwrap().to_string();
+        let config = Config::load(&cfg_file).await.unwrap();
         assert_eq!(
             config,
             Config {

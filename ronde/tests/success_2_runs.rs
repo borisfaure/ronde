@@ -13,24 +13,26 @@ fn success_2_runs() -> Result<(), Box<dyn std::error::Error>> {
     let binding = dir_path.into_os_string();
     let dir = binding.to_str().unwrap();
     let mut filepath = PathBuf::from(temp_dir.path());
-    filepath.push("config.yaml");
+    filepath.push("config.toml");
     let mut cfg_file = std::fs::File::create(&filepath)?;
     cfg_file.write_all(
         format!(
-            r#"---
-name: "Ronde"
-output_dir: "{}"
-history_file: "{}/history.yaml"
-commands:
-  - name: ping localhost
-    run: ping -c 4 localhost
-    timeout: 5
-  - name: ping not joinable
-    run: ping -c 4 notjoinable.notjoinable
-    timeout: 5
-  - name: ping hits timeout
-    run: ping -c 10 localhost
-    timeout: 5
+            r#"
+name = "Ronde"
+output_dir = "{}"
+history_file = "{}/history.toml"
+[[commands]]
+  name = "ping localhost"
+  run = "ping -c 4 localhost"
+  timeout = 5
+[[commands]]
+  name = "ping not joinable"
+  run = "ping -c 4 notjoinable.notjoinable"
+  timeout = 5
+[[commands]]
+  name = "ping hits timeout"
+  run = "ping -c 10 localhost"
+  timeout = 5
 "#,
             dir, dir
         )
