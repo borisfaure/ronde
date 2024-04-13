@@ -1,6 +1,6 @@
 use serde_derive::Deserialize;
 use snafu::prelude::*;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use tokio::fs;
 
 /// Timeout in seconds
@@ -27,6 +27,14 @@ pub struct CommandConfig {
     pub uid: Option<u32>,
     /// GID to use to run the command
     pub gid: Option<u32>,
+    /// Clears the entire environment map before running the command
+    #[serde(default)]
+    pub clear_env: bool,
+    /// Environment variables to set
+    #[serde(default)]
+    pub env: Option<HashMap<String, String>>,
+    /// Working directory
+    pub cwd: Option<String>,
 }
 
 #[derive(Debug, Default, PartialEq, Deserialize)]
@@ -145,6 +153,10 @@ name = "Ronde"
 [[commands]]
     name = "ping localhost"
     run = "ping -c 4 localhost"
+    clear_env = true
+    env.KEY1 = "Value1"
+    env.KEY2 = "Value2"
+    cwd = "/tmp"
 "#
         )
         .unwrap();
@@ -171,13 +183,19 @@ name = "Ronde"
                         run: "echo \"test\"".to_string(),
                         uid: Some(1000),
                         gid: Some(1234),
+                        ..Default::default()
                     },
                     CommandConfig {
                         name: "ping localhost".to_string(),
                         timeout: Timeout(60),
                         run: "ping -c 4 localhost".to_string(),
-                        uid: None,
-                        gid: None,
+                        clear_env: true,
+                        env: Some(HashMap::from([
+                            ("KEY1".to_string(), "Value1".to_string()),
+                            ("KEY2".to_string(), "Value2".to_string())
+                        ])),
+                        cwd: Some("/tmp".to_string()),
+                        ..Default::default()
                     }
                 ],
                 ..Default::default()

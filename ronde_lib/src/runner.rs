@@ -108,6 +108,15 @@ pub async fn execute_command(config: CommandConfig) -> CommandResult {
     if let Some(gid) = config.gid {
         cmd = cmd.gid(gid);
     }
+    if let Some(cwd) = &config.cwd {
+        cmd = cmd.current_dir(cwd);
+    }
+    if config.clear_env {
+        cmd = cmd.env_clear();
+    }
+    if let Some(env) = &config.env {
+        cmd = cmd.envs(env.iter());
+    }
 
     match cmd.spawn() {
         Ok(child) => {

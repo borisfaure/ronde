@@ -385,8 +385,7 @@ mod tests {
                     name: "test2".to_string(),
                     run: "test2".to_string(),
                     timeout: Timeout(10),
-                    uid: None,
-                    gid: None,
+                    ..Default::default()
                 },
                 result: Ok(CommandOutput {
                     exit: 0,
@@ -399,8 +398,7 @@ mod tests {
                     name: "test3".to_string(),
                     timeout: Timeout(10),
                     run: "test3".to_string(),
-                    uid: None,
-                    gid: None,
+                    ..Default::default()
                 },
                 result: Ok(CommandOutput {
                     exit: 0,
