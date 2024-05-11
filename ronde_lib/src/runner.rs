@@ -1,4 +1,4 @@
-use crate::config::CommandConfig;
+use crate::config::{CommandConfig, DefaultRunnerEnv};
 use serde_derive::{Deserialize, Serialize};
 use std::process::Output;
 use std::time::Duration;
@@ -94,7 +94,7 @@ impl CommandResult {
 }
 
 /// Execute a command
-pub async fn execute_command(config: CommandConfig) -> CommandResult {
+pub async fn execute_command(config: CommandConfig, defaults: &DefaultRunnerEnv) -> CommandResult {
     let mut cmd = Command::new("sh");
     let mut cmd = cmd
         .arg("-c")
@@ -102,19 +102,19 @@ pub async fn execute_command(config: CommandConfig) -> CommandResult {
         .kill_on_drop(true)
         .stdout(std::process::Stdio::piped())
         .stderr(std::process::Stdio::piped());
-    if let Some(uid) = config.uid {
+    if let Some(uid) = config.get_uid(defaults) {
         cmd = cmd.uid(uid);
     }
-    if let Some(gid) = config.gid {
+    if let Some(gid) = config.get_gid(defaults) {
         cmd = cmd.gid(gid);
     }
-    if let Some(cwd) = &config.cwd {
+    if let Some(cwd) = config.get_cwd(defaults) {
         cmd = cmd.current_dir(cwd);
     }
-    if config.clear_env {
+    if config.get_clear_env(defaults) {
         cmd = cmd.env_clear();
     }
-    if let Some(env) = &config.env {
+    if let Some(env) = config.get_env(defaults) {
         cmd = cmd.envs(env.iter());
     }
 

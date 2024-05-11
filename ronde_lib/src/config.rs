@@ -37,6 +37,73 @@ pub struct CommandConfig {
     pub cwd: Option<String>,
 }
 
+impl CommandConfig {
+    /// Get the UID to run the command based on the config and the defaults
+    pub fn get_uid(&self, defaults: &DefaultRunnerEnv) -> Option<u32> {
+        match (self.uid, defaults.uid) {
+            (None, None) => None,
+            (None, Some(uid)) => Some(uid),
+            (Some(uid), _) => Some(uid),
+        }
+    }
+    /// Get the GID to run the command based on the config and the defaults
+    pub fn get_gid(&self, defaults: &DefaultRunnerEnv) -> Option<u32> {
+        match (self.gid, defaults.gid) {
+            (None, None) => None,
+            (None, Some(gid)) => Some(gid),
+            (Some(gid), _) => Some(gid),
+        }
+    }
+    /// Get the directory where to run the command based on the config and the defaults
+    pub fn get_cwd(&self, defaults: &DefaultRunnerEnv) -> Option<String> {
+        match (self.cwd.as_ref(), defaults.cwd.as_ref()) {
+            (None, None) => None,
+            (None, Some(cwd)) => Some(cwd.clone()),
+            (Some(cwd), _) => Some(cwd.clone()),
+        }
+    }
+
+    /// Whether to clear environment based on the config and the defaults
+    pub fn get_clear_env(&self, defaults: &DefaultRunnerEnv) -> bool {
+        matches!(
+            (self.clear_env, defaults.clear_env),
+            (true, _) | (false, Some(true))
+        )
+    }
+
+    /// Get the environment variables to set based on the config and the
+    /// defaults
+    pub fn get_env(&self, defaults: &DefaultRunnerEnv) -> Option<HashMap<String, String>> {
+        match (self.env.as_ref(), defaults.env.as_ref()) {
+            (None, None) => None,
+            (Some(hm), None) => Some(hm.clone()),
+            (None, Some(hm)) => Some(hm.clone()),
+            (Some(hmc), Some(hmd)) => {
+                let mut hm: HashMap<String, String> = hmd.clone();
+                hm.extend(hmc.iter().map(|(k, v)| (k.clone(), v.clone())));
+                Some(hm)
+            }
+        }
+    }
+}
+
+#[derive(Debug, Default, PartialEq, Deserialize)]
+/// Default environment for running commands
+pub struct DefaultRunnerEnv {
+    /// UID to use to run the command
+    pub uid: Option<u32>,
+    /// GID to use to run the command
+    pub gid: Option<u32>,
+    /// Clears the entire environment map before running the command
+    #[serde(default)]
+    pub clear_env: Option<bool>,
+    /// Environment variables to set
+    #[serde(default)]
+    pub env: Option<HashMap<String, String>>,
+    /// Working directory
+    pub cwd: Option<String>,
+}
+
 #[derive(Debug, Default, PartialEq, Deserialize)]
 /// Pushover configuration
 pub struct PushoverConfig {
@@ -100,6 +167,9 @@ pub struct Config {
     pub notifications: Option<NotificationConfig>,
     /// List of commands to run
     pub commands: Vec<CommandConfig>,
+    /// Default settings for running commands
+    #[serde(default)]
+    pub default_env: DefaultRunnerEnv,
 }
 
 impl Config {

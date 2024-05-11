@@ -42,7 +42,13 @@ async fn main() -> Result<(), RondeError> {
     let yaml_file = &args[1];
     let config = Config::load(yaml_file).await?;
 
-    let results = join_all(config.commands.into_iter().map(runner::execute_command)).await;
+    let results = join_all(
+        config
+            .commands
+            .into_iter()
+            .map(|c| runner::execute_command(c, &config.default_env)),
+    )
+    .await;
 
     /* Stop running as root */
     if let Some(gid) = config.gid {
