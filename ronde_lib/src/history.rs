@@ -15,7 +15,7 @@ pub enum HistoryError {
     IoError(#[from] std::io::Error),
     /// Serde Error
     #[error("Serde Error: {0}")]
-    SerdeError(#[from] serde_yaml::Error),
+    SerdeError(#[from] serde_json::Error),
 }
 
 /// History Item in error
@@ -67,7 +67,6 @@ pub enum TimeTag {
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub struct CommandHistoryEntry {
     /// Result of the command
-    #[serde(with = "serde_yaml::with::singleton_map_recursive")]
     pub result: Result<CommandOutput, HistoryItemError>,
     /// Timestamp when the command was run
     pub timestamp: DateTime<Utc>,
@@ -297,7 +296,7 @@ impl History {
     pub async fn load(history_file: &String) -> Result<Self, HistoryError> {
         match fs::read_to_string(history_file).await {
             Ok(contents) => {
-                let history: History = serde_yaml::from_str(&contents)?;
+                let history: History = serde_json::from_str(&contents)?;
                 Ok(history)
             }
             Err(ref e) if e.kind() == std::io::ErrorKind::NotFound => Ok(History {
@@ -309,7 +308,7 @@ impl History {
 
     /// Save history to a file
     pub async fn save(&self, history_file: &String) -> Result<(), HistoryError> {
-        let bytes = serde_yaml::to_string(self)?;
+        let bytes = serde_json::to_string(self)?;
         fs::write(history_file, &bytes).await?;
         Ok(())
     }
