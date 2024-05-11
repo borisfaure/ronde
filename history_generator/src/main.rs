@@ -231,7 +231,11 @@ fn gen_command_history(name: String) -> CommandHistory {
     for timestamp in TIMESTAMPS {
         entries.push(gen_command_history_entry(timestamp));
     }
-    CommandHistory { name, entries }
+    CommandHistory {
+        name,
+        entries,
+        last_failure_notification: None,
+    }
 }
 
 fn gen_history(nb_commands: usize) -> History {

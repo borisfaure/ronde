@@ -15,13 +15,15 @@ pub enum NotificationError {
 
 #[derive(Debug, PartialEq)]
 /// The type of notification to send.
-enum NotificationType {
+pub enum NotificationType {
     /// No notification to send.
     None,
     /// The command has failed. This is the first time it has failed in a row.
     Failure,
     /// The succeeded after a failure.
     BackFromFailure,
+    /// The command has failed multiple times in a row.
+    ContinuousFailure,
 }
 
 async fn send_notification(
@@ -35,6 +37,9 @@ async fn send_notification(
         let mut title = match notification_type {
             NotificationType::Failure => format!("New Failure of {}", command_name),
             NotificationType::BackFromFailure => format!("Back from failure on {}", command_name),
+            NotificationType::ContinuousFailure => {
+                format!("Continuous failure of {}", command_name)
+            }
             NotificationType::None => "None".to_string(),
         };
         let mut details = match notification_type {
@@ -52,6 +57,19 @@ async fn send_notification(
                 }
             }
             NotificationType::BackFromFailure => title.clone(),
+            NotificationType::ContinuousFailure => {
+                if let Some(last) = last_run {
+                    match last.result {
+                        Ok(ref output) => format!(
+                            "{}\n>>>STDERR\n{}\n>>>STDOUT\n{}",
+                            last.command, &output.stderr, &output.stdout
+                        ),
+                        Err(ref e) => format!("{}\n{}", last.command, e),
+                    }
+                } else {
+                    "The command has failed multiple times.".to_string()
+                }
+            }
             NotificationType::None => title.clone(),
         };
         // Truncate the message to 1024 characters.
@@ -89,16 +107,10 @@ async fn send_notification(
 
 pub async fn check_and_send_notifications(
     config: &NotificationConfig,
-    history: &History,
+    history: &mut History,
 ) -> Result<(), NotificationError> {
-    for command_history in &history.commands {
-        let ntype = if command_history.is_new_failure() {
-            NotificationType::Failure
-        } else if command_history.is_back_from_failure() {
-            NotificationType::BackFromFailure
-        } else {
-            NotificationType::None
-        };
+    for command_history in &mut history.commands {
+        let ntype = command_history.need_to_notify(config);
         if ntype != NotificationType::None {
             send_notification(
                 config,

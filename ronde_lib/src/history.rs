@@ -1,3 +1,5 @@
+use crate::config::NotificationConfig;
+use crate::notification::NotificationType;
 use crate::runner::{CommandError, CommandOutput, CommandResult};
 use crate::summary::Summary;
 use chrono::{DateTime, Datelike, Timelike, Utc};
@@ -97,6 +99,10 @@ pub struct CommandHistory {
     pub name: String,
     /// Entries for the command
     pub entries: Vec<CommandHistoryEntry>,
+    /// Date of last failure notification
+    /// This is used to avoid sending too many notifications
+    /// when a command is failing.
+    pub last_failure_notification: Option<DateTime<Utc>>,
 }
 
 impl CommandHistory {
@@ -183,7 +189,7 @@ impl CommandHistory {
     }
 
     /// Return true if the last entry is a failure and the previous one, if any, is not
-    pub fn is_new_failure(&self) -> bool {
+    fn is_new_failure(&self) -> bool {
         if let Some(last) = self.entries.last() {
             if last.result.is_err() {
                 if self.entries.len() > 1 {
@@ -201,7 +207,7 @@ impl CommandHistory {
     }
 
     /// Return true if the last entry is a success and the previous one, if any, is an error
-    pub fn is_back_from_failure(&self) -> bool {
+    fn is_back_from_failure(&self) -> bool {
         if let Some(last) = self.entries.last() {
             if last.result.is_ok() && self.entries.len() > 1 {
                 if let Some(previous) = self.entries.get(self.entries.len() - 2) {
@@ -212,6 +218,53 @@ impl CommandHistory {
             }
         }
         false
+    }
+
+    /// Set the last failure notification to now
+    fn set_notified(&mut self, forget: bool) {
+        if forget {
+            self.last_failure_notification = None;
+        } else {
+            self.last_failure_notification = Some(chrono::Utc::now());
+        }
+    }
+
+    fn is_notify_continuous_failure(&self, config: &NotificationConfig) -> bool {
+        if config.minutes_between_continuous_failure_notification == 0 {
+            return false;
+        }
+        if let Some(last) = self.entries.last() {
+            if last.result.is_err() {
+                if let Some(last_failure_notification) = self.last_failure_notification {
+                    let delta = chrono::Utc::now().signed_duration_since(last_failure_notification);
+                    if delta.num_minutes() >= config.minutes_between_continuous_failure_notification
+                    {
+                        return true;
+                    }
+                }
+            }
+        }
+        false
+    }
+
+    /// Need to notify?
+    pub fn need_to_notify(&mut self, config: &NotificationConfig) -> NotificationType {
+        let ntype = if self.is_new_failure() {
+            NotificationType::Failure
+        } else if self.is_back_from_failure() {
+            NotificationType::BackFromFailure
+        } else if self.is_notify_continuous_failure(config) {
+            NotificationType::ContinuousFailure
+        } else {
+            NotificationType::None
+        };
+        match ntype {
+            NotificationType::None | NotificationType::BackFromFailure => self.set_notified(true),
+            NotificationType::Failure | NotificationType::ContinuousFailure => {
+                self.set_notified(false)
+            }
+        }
+        ntype
     }
 }
 
@@ -301,6 +354,7 @@ impl History {
                     let command_history = CommandHistory {
                         name: result.config.name.clone(),
                         entries: vec![entry],
+                        last_failure_notification: None,
                     };
                     self.commands.push(command_history);
                 }
@@ -348,6 +402,7 @@ mod tests {
                     tag: TimeTag::Minute(0),
                     command: "testing".to_string(),
                 }],
+                last_failure_notification: None,
             }],
         };
 
@@ -364,18 +419,22 @@ mod tests {
                 CommandHistory {
                     name: "test".to_string(),
                     entries: vec![],
+                    last_failure_notification: None,
                 },
                 CommandHistory {
                     name: "test2".to_string(),
                     entries: vec![],
+                    last_failure_notification: None,
                 },
                 CommandHistory {
                     name: "test3".to_string(),
                     entries: vec![],
+                    last_failure_notification: None,
                 },
                 CommandHistory {
                     name: "test4".to_string(),
                     entries: vec![],
+                    last_failure_notification: None,
                 },
             ],
         };
@@ -414,10 +473,12 @@ mod tests {
                     CommandHistory {
                         name: "test2".to_string(),
                         entries: vec![],
+                        last_failure_notification: None,
                     },
                     CommandHistory {
                         name: "test3".to_string(),
                         entries: vec![],
+                        last_failure_notification: None,
                     },
                 ]
             }
@@ -441,6 +502,7 @@ mod tests {
         let mut history = CommandHistory {
             name: "test".to_string(),
             entries: vec![],
+            last_failure_notification: None,
         };
         let test_set = vec![
             ("Tue, 30 Jan 2024 01:41:22 GMT", TimeTag::Day(1)),
@@ -519,6 +581,7 @@ mod tests {
         let mut history = CommandHistory {
             name: "test".to_string(),
             entries: vec![],
+            last_failure_notification: None,
         };
         let test_set = vec![
             "Mon, 29 Jan 2024 23:41:22 GMT",
@@ -655,6 +718,7 @@ mod tests {
         let mut history = CommandHistory {
             name: "test".to_string(),
             entries: vec![],
+            last_failure_notification: None,
         };
         for tc in test_set.iter() {
             if tc.is_ok {
@@ -715,6 +779,7 @@ mod tests {
         let mut history = CommandHistory {
             name: "test".to_string(),
             entries: vec![],
+            last_failure_notification: None,
         };
         // empty history
         assert_eq!(history.is_new_failure(), false);

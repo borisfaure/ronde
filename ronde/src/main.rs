@@ -70,7 +70,7 @@ async fn main() -> Result<(), RondeError> {
     html::generate_auxiliary_files(&config.output_dir).await?;
 
     if let Some(ref nconfig) = config.notifications {
-        check_and_send_notifications(nconfig, &history).await?;
+        check_and_send_notifications(nconfig, &mut history).await?;
     }
 
     history.save(&config.history_file).await?;

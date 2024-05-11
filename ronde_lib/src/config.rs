@@ -56,6 +56,10 @@ pub struct NotificationConfig {
     /// Notify on success after failure
     #[serde(default)]
     pub notify_on_success_after_failure: bool,
+    /// Notify on failure every minutes
+    /// If set to 0 (the default), it will only notify on new failures
+    #[serde(default)]
+    pub minutes_between_continuous_failure_notification: i64,
 }
 
 /// Error type for configuration
@@ -141,6 +145,9 @@ mod tests {
 output_dir = "/var/www/html"
 history_file= "/var/lib/ronde/history"
 name = "Ronde"
+[notifications]
+    notify_on_success_after_failure = true
+    minutes_between_continuous_failure_notification = 120
 [notifications.pushover]
     token = "token123"
     user = "user123"
@@ -171,6 +178,8 @@ name = "Ronde"
                         token: "token123".to_string(),
                         ..Default::default()
                     }),
+                    notify_on_success_after_failure: true,
+                    minutes_between_continuous_failure_notification: 120,
                     ..Default::default()
                 }),
                 name: "Ronde".to_string(),
