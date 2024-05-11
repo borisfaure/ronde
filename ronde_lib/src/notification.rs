@@ -92,7 +92,7 @@ pub async fn check_and_send_notifications(
     history: &History,
 ) -> Result<(), NotificationError> {
     for command_history in &history.commands {
-        let ntype = if command_history.is_new_error() {
+        let ntype = if command_history.is_new_failure() {
             NotificationType::Failure
         } else if command_history.is_back_from_failure() {
             NotificationType::BackFromFailure

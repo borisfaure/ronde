@@ -182,8 +182,8 @@ impl CommandHistory {
             });
     }
 
-    /// Return true if the last entry is an error an the previous one, if any, is not
-    pub fn is_new_error(&self) -> bool {
+    /// Return true if the last entry is a failure and the previous one, if any, is not
+    pub fn is_new_failure(&self) -> bool {
         if let Some(last) = self.entries.last() {
             if last.result.is_err() {
                 if self.entries.len() > 1 {
@@ -711,13 +711,13 @@ mod tests {
     }
 
     #[test]
-    fn test_is_new_error_back_from_failure() {
+    fn test_is_new_failure_back_from_failure() {
         let mut history = CommandHistory {
             name: "test".to_string(),
             entries: vec![],
         };
         // empty history
-        assert_eq!(history.is_new_error(), false);
+        assert_eq!(history.is_new_failure(), false);
         assert_eq!(history.is_back_from_failure(), false);
 
         history.entries.push(CommandHistoryEntry {
@@ -731,7 +731,7 @@ mod tests {
             command: "".to_string(),
         });
         // single entry is ok => no new error, not back from failure
-        assert_eq!(history.is_new_error(), false);
+        assert_eq!(history.is_new_failure(), false);
         assert_eq!(history.is_back_from_failure(), false);
 
         history.entries.push(CommandHistoryEntry {
@@ -745,7 +745,7 @@ mod tests {
             command: "".to_string(),
         });
         // newer entry is an error and previous one is not => new error, not back from failure
-        assert_eq!(history.is_new_error(), true);
+        assert_eq!(history.is_new_failure(), true);
         assert_eq!(history.is_back_from_failure(), false);
 
         history.entries.push(CommandHistoryEntry {
@@ -759,7 +759,7 @@ mod tests {
             command: "".to_string(),
         });
         // newer entry is an error and previous one is also an error => no new error, not back from failure
-        assert_eq!(history.is_new_error(), false);
+        assert_eq!(history.is_new_failure(), false);
         assert_eq!(history.is_back_from_failure(), false);
 
         history.entries.push(CommandHistoryEntry {
@@ -773,7 +773,7 @@ mod tests {
             command: "".to_string(),
         });
         // newer entry is ok and previous one is an error => no new error, back from failure
-        assert_eq!(history.is_new_error(), false);
+        assert_eq!(history.is_new_failure(), false);
         assert_eq!(history.is_back_from_failure(), true);
 
         history.entries.push(CommandHistoryEntry {
@@ -787,7 +787,7 @@ mod tests {
             command: "".to_string(),
         });
         // newer entry is ok and previous one is also ok => no new error, not back from failure
-        assert_eq!(history.is_new_error(), false);
+        assert_eq!(history.is_new_failure(), false);
         assert_eq!(history.is_back_from_failure(), false);
 
         history.entries.clear();
@@ -802,7 +802,7 @@ mod tests {
             command: "".to_string(),
         });
         // single entry is an error => new error, not back from failure
-        assert_eq!(history.is_new_error(), true);
+        assert_eq!(history.is_new_failure(), true);
         assert_eq!(history.is_back_from_failure(), false);
     }
 }
