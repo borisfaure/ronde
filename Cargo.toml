@@ -1,5 +1,5 @@
 [workspace]
-members = ["ronde_lib", "ronde", "history_renderer", "history_generator"]
+members = ["ronde_lib", "ronde", "history_renderer", "history_generator", "history_converter"]
 resolver = "2"
 
 [workspace.package]
