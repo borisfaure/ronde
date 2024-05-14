@@ -221,6 +221,13 @@ name = "Ronde"
 [notifications.pushover]
     token = "token123"
     user = "user123"
+[default_env]
+    uid = 10000
+    gid = 12340
+    clear_env = true
+    cwd = "/"
+    [default_env.env]
+    KEY1 = "DefaultValue1"
 [[commands]]
     name = "test"
     timeout = 10
@@ -277,6 +284,16 @@ name = "Ronde"
                         ..Default::default()
                     }
                 ],
+                default_env: DefaultRunnerEnv {
+                    uid: Some(10000),
+                    gid: Some(12340),
+                    clear_env: Some(true),
+                    env: Some(HashMap::from([(
+                        "KEY1".to_string(),
+                        "DefaultValue1".to_string()
+                    )])),
+                    cwd: Some("/".to_string()),
+                },
                 ..Default::default()
             }
         );
