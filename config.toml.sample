@@ -1,0 +1,87 @@
+# Ronde configuration file
+
+# Name of the Ronde instance, used in the HTML output
+name = "Ronde"
+# Where to store the HTML output
+output_dir = "/var/lib/ronde/html"
+# Where to store the history file
+history_file = "/var/lib/ronde/history"
+# UID and GID to run Ronde as, once the configuration file has been read
+uid = 1005
+gid = 1005
+
+# Notification settings
+[notifications]
+    # If set to true, send notifications on success after a failure.
+    # Default is false.
+    notify_on_success_after_failure = true
+    # If set to true, send notifications on ongoing failures every X minutes.
+    # Default is to not send notifications on ongoing failures,
+    # only once the command has failed.
+    minutes_between_continuous_failure_notification = 120
+# Notification settings for the Pushover service.
+# If not set, no notifications will be sent.
+[notifications.pushover]
+    # User key for the Pushover service
+    user = "tienoa3aa7chah9aex5kiveikoix7n" # Random string
+    token = "eechucii3eeghui7fi3gixei4viphu" # Random string
+    # Optional url to link to in the notification
+    url = "https://my.ronde.instance"
+
+# Default environment variables for all commands
+[default_env]
+# If present, the command will be run as this user
+uid = 65534 # nobody
+# If present, the command will be run as this group
+gid = 65534 # nogroup
+# If present, the command will be run from this directory
+cwd = "/tmp"
+# If set to true, clear the environment variables before running the command
+clear_env = true
+# If present, the command will be run with these environment variables set
+env.PATH = "/usr/local/bin:/usr/bin:/opt/bin"
+env.USER = "nobody"
+env.HOME = "/home/nobody"
+env._ = "/usr/bin/env"
+
+#
+# List of commands to run
+#
+
+[[commands]]
+# Name of the command, used in the HTML output
+name = "ping localhost"
+# Command to run
+run = "ping -c 4 localhost"
+# Consider the command a failure if it takes more than this many seconds
+# Default is 60 seconds
+timeout = 5
+# If present, the command will be run as this user
+uid = 65534
+# If present, the command will be run as this gro
+gid = 65534
+# If present, the command will be run from this directory
+cwd = "/tmp"
+# If set to true, clear the environment variables before running the command
+# Default is false
+clear_env = true
+# If present, the command will be run with these environment variables set
+env.PATH = "/usr/local/bin:/usr/bin
+env.USER = "nobody"
+env.HOME = "/home/nobody"
+env._ = "/usr/bin/env"
+
+[[commands]]
+name = "ping hits timeout"
+run = "ping -c 10 localhost"
+timeout = 5
+
+[[commands]]
+name = "ping google.com"
+run = "ping -c 4 google.com"
+timeout = 5
+
+[[commands]]
+name = "ping6 google.com"
+run = "ping6 -c 4 google.com"
+timeout = 5
