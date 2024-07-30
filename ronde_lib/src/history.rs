@@ -115,6 +115,7 @@ impl CommandHistory {
     /// - 1 per 5 minutes for 60 minutes.
     /// - 1 per hour for 24 hours,
     /// - 1 per day for 7 days,
+    ///
     /// This is a naive way to aggregate the results over time.
     ///
     /// - If the latest entry is less than an hour old, the tag is the minute
@@ -165,8 +166,10 @@ impl CommandHistory {
     /// - 1 per day for 7 days,
     /// - 1 per hour for 24 hours,
     /// - 1 per 5 minutes for 60 minutes.
+    ///
     /// This is a simple way to keep a history of the last week at a
     /// reasonable size..
+    ///
     /// It's not perfect and naive, but it's good enough for a start.
     pub fn rotate(&mut self) {
         self.entries
