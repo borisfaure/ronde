@@ -9,7 +9,7 @@ version.workspace = true
 
 
 [dependencies]
-rand = "0.8"
+rand = "0.9"
 ronde_lib = { path = "../ronde_lib" }
 tokio.workspace = true
 chrono = { version = "0.4", features = ["serde"] }
