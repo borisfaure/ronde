@@ -1,4 +1,4 @@
-use rand::seq::SliceRandom;
+use rand::seq::IndexedRandom;
 use rand::Rng;
 use ronde_lib::{
     history::{CommandHistory, CommandHistoryEntry, History, HistoryItemError, TimeTag},
@@ -119,15 +119,12 @@ const LOREM_IPSUM: [&str; 103] = [
 ];
 
 fn generate_word() -> String {
-    LOREM_IPSUM
-        .choose(&mut rand::thread_rng())
-        .unwrap()
-        .to_string()
+    LOREM_IPSUM.choose(&mut rand::rng()).unwrap().to_string()
 }
 
 fn generate_random_sentence() -> String {
     LOREM_IPSUM
-        .choose_multiple(&mut rand::thread_rng(), 10)
+        .choose_multiple(&mut rand::rng(), 10)
         .copied()
         .collect::<Vec<&str>>()
         .join(" ")
@@ -203,11 +200,11 @@ fn gen_command_history_entry(timestamp: &str) -> CommandHistoryEntry {
         })
     } else if rand::random::<f32>() < PERCENTAGE_OF_TIMEOUT {
         Result::Err(HistoryItemError::Timeout {
-            timeout: rand::thread_rng().gen_range(5_u16..120_u16),
+            timeout: rand::rng().random_range(5_u16..120_u16),
         })
     } else if rand::random::<f32>() < PERCENTAGE_OF_COMMAND_ERROR {
         Result::Err(HistoryItemError::CommandError {
-            exit: rand::thread_rng().gen_range(1_i32..255_i32),
+            exit: rand::rng().random_range(1_i32..255_i32),
             stdout: generate_random_paragraph(),
             stderr: generate_random_paragraph(),
         })
