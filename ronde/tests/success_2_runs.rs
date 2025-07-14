@@ -19,8 +19,8 @@ fn success_2_runs() -> Result<(), Box<dyn std::error::Error>> {
         format!(
             r#"
 name = "Ronde"
-output_dir = "{}"
-history_file = "{}/history.toml"
+output_dir = "{dir}"
+history_file = "{dir}/history.toml"
 [[commands]]
   name = "ping localhost"
   run = "ping -c 4 localhost"
@@ -33,8 +33,7 @@ history_file = "{}/history.toml"
   name = "ping hits timeout"
   run = "ping -c 10 localhost"
   timeout = 5
-"#,
-            dir, dir
+"#
         )
         .as_bytes(),
     )?;

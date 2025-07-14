@@ -54,13 +54,13 @@ async fn main() -> Result<(), RondeError> {
     if let Some(gid) = config.gid {
         let result = unsafe { setgid(gid) };
         if result != 0 {
-            panic!("Failed to setgid to {}", gid);
+            panic!("Failed to setgid to {gid}");
         }
     }
     if let Some(uid) = config.uid {
         let result = unsafe { setuid(uid) };
         if result != 0 {
-            panic!("Failed to setuid to {}", uid);
+            panic!("Failed to setuid to {uid}");
         }
     }
 

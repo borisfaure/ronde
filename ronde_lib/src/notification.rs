@@ -35,10 +35,10 @@ async fn send_notification(
     if let Some(ref pushover) = config.pushover {
         let client = reqwest::Client::new();
         let mut title = match notification_type {
-            NotificationType::Failure => format!("New Failure of {}", command_name),
-            NotificationType::BackFromFailure => format!("Back from failure on {}", command_name),
+            NotificationType::Failure => format!("New Failure of {command_name}"),
+            NotificationType::BackFromFailure => format!("Back from failure on {command_name}"),
             NotificationType::ContinuousFailure => {
-                format!("Continuous failure of {}", command_name)
+                format!("Continuous failure of {command_name}")
             }
             NotificationType::None => "None".to_string(),
         };

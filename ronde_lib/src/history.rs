@@ -35,7 +35,7 @@ pub enum HistoryItemError {
 impl std::fmt::Display for HistoryItemError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            HistoryItemError::Timeout { timeout } => write!(f, "Timeout {}s", timeout),
+            HistoryItemError::Timeout { timeout } => write!(f, "Timeout {timeout}s"),
             HistoryItemError::CommandError {
                 exit,
                 stdout,
@@ -43,11 +43,10 @@ impl std::fmt::Display for HistoryItemError {
             } => {
                 write!(
                     f,
-                    "Command error: exit: {}, stdout: {}, stderr: {}",
-                    exit, stdout, stderr
+                    "Command error: exit: {exit}, stdout: {stdout}, stderr: {stderr}"
                 )
             }
-            HistoryItemError::Other { message } => write!(f, "Other error: {}", message),
+            HistoryItemError::Other { message } => write!(f, "Other error: {message}"),
         }
     }
 }
@@ -560,8 +559,7 @@ mod tests {
             assert_eq!(
                 history.entries.pop().unwrap().tag,
                 tag,
-                "timestamp: {}",
-                datetime
+                "timestamp: {datetime}"
             );
         }
     }
@@ -621,8 +619,8 @@ mod tests {
             CommandHistoryEntry {
                 result: Ok(CommandOutput {
                     exit: 0,
-                    stdout: format!("ok_stdout_{}", d),
-                    stderr: format!("ok_stderr_{}", d),
+                    stdout: format!("ok_stdout_{d}"),
+                    stderr: format!("ok_stderr_{d}"),
                 }),
                 timestamp: chrono::DateTime::parse_from_rfc2822(d).unwrap().to_utc(),
                 tag: TimeTag::Minute(0),
@@ -633,8 +631,8 @@ mod tests {
             CommandHistoryEntry {
                 result: Err(HistoryItemError::CommandError {
                     exit: -1i32,
-                    stdout: format!("err_stdout_{}", d),
-                    stderr: format!("err_stderr_{}", d),
+                    stdout: format!("err_stdout_{d}"),
+                    stderr: format!("err_stderr_{d}"),
                 }),
                 timestamp: chrono::DateTime::parse_from_rfc2822(d).unwrap().to_utc(),
                 tag: TimeTag::Minute(0),

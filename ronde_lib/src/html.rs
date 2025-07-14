@@ -139,8 +139,8 @@ impl CommandHistoryEntrySummary {
     /// Create a new CommandHistoryEntrySummary
     fn new(entry: &CommandHistoryEntry) -> CommandHistoryEntrySummary {
         let (tag_kind, tag_value) = match entry.tag {
-            TimeTag::Minute(m) => ("m".to_string(), format!("{:02}", m)),
-            TimeTag::Hour(h) => ("h".to_string(), format!("{:02}", h)),
+            TimeTag::Minute(m) => ("m".to_string(), format!("{m:02}")),
+            TimeTag::Hour(h) => ("h".to_string(), format!("{h:02}")),
             TimeTag::Day(d) => match d {
                 0 => ("d".to_string(), "Mo".to_string()),
                 1 => ("d".to_string(), "Tu".to_string()),
