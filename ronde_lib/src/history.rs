@@ -583,22 +583,26 @@ mod tests {
             entries: vec![],
             last_failure_notification: None,
         };
-        let test_set = ["Mon, 29 Jan 2024 23:41:22 GMT",
+        let test_set = [
+            "Mon, 29 Jan 2024 23:41:22 GMT",
             "Tue, 30 Jan 2024 01:41:22 GMT",
             "Tue, 30 Jan 2024 18:49:41 GMT",
             "Tue, 30 Jan 2024 18:49:42 GMT",
             "Tue, 30 Jan 2024 18:49:43 GMT",
-            "Wed, 07 Feb 2024 19:49:43 GMT"];
+            "Wed, 07 Feb 2024 19:49:43 GMT",
+        ];
         for datetime in test_set.iter() {
             history.entries.push(ch_ok(datetime));
         }
         history.recreate_tags();
 
-        let expected = ["Tue, 30 Jan 2024 01:41:22 GMT",
+        let expected = [
+            "Tue, 30 Jan 2024 01:41:22 GMT",
             "Tue, 30 Jan 2024 18:49:41 GMT",
             "Tue, 30 Jan 2024 18:49:42 GMT",
             "Tue, 30 Jan 2024 18:49:43 GMT",
-            "Wed, 07 Feb 2024 19:49:43 GMT"];
+            "Wed, 07 Feb 2024 19:49:43 GMT",
+        ];
         assert_eq!(history.entries.len(), expected.len(),);
         for datetime in expected.iter().rev() {
             assert_eq!(
