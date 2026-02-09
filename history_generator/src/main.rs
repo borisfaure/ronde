@@ -1,5 +1,5 @@
 use rand::seq::IndexedRandom;
-use rand::Rng;
+use rand::RngExt;
 use ronde_lib::{
     history::{CommandHistory, CommandHistoryEntry, History, HistoryItemError, TimeTag},
     runner::CommandOutput,
@@ -124,7 +124,7 @@ fn generate_word() -> String {
 
 fn generate_random_sentence() -> String {
     LOREM_IPSUM
-        .choose_multiple(&mut rand::rng(), 10)
+        .sample(&mut rand::rng(), 10)
         .copied()
         .collect::<Vec<&str>>()
         .join(" ")
