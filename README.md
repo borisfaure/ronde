@@ -1,6 +1,10 @@
 ![CI](https://github.com/borisfaure/ronde/actions/workflows/build_and_test.yml/badge.svg)
 [![License](https://img.shields.io/badge/license-BSD--2--Clause-green.svg)](LICENSE.txt)
 
+> ### ⚠️ Heads up!
+>
+> This project has [migrated to Codeberg](https://codeberg.org/borisfaure/ronde)
+
 # Ronde
 
 Ronde is a simple tool to monitor services and systems by running a defined
